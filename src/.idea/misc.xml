@@ -4,6 +4,7 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/twilio/pom.xml" />
+        <option value="$PROJECT_DIR$/speedSMS/pom.xml" />
       </list>
     </option>
   </component>
