@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/messagebird/messagebird.iml" filepath="$PROJECT_DIR$/messagebird/messagebird.iml" />
+      <module fileurl="file://$PROJECT_DIR$/firebase/firebase.iml" filepath="$PROJECT_DIR$/firebase/firebase.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/src.iml" filepath="$PROJECT_DIR$/.idea/src.iml" />
-      <module fileurl="file://$PROJECT_DIR$/vbcs/vbcs.iml" filepath="$PROJECT_DIR$/vbcs/vbcs.iml" />
     </modules>
   </component>
 </project>
