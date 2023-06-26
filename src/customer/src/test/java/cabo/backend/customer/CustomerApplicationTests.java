@@ -1,10 +1,10 @@
-package cabo.backend.firebase;
+package cabo.backend.customer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class FirebaseApplicationTests {
+class CustomerApplicationTests {
 
 	@Test
 	void contextLoads() {

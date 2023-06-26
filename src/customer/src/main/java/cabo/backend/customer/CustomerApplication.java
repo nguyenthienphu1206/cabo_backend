@@ -1,13 +1,13 @@
-package cabo.backend.firebase;
+package cabo.backend.customer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class FirebaseApplication {
+public class CustomerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FirebaseApplication.class, args);
+		SpringApplication.run(CustomerApplication.class, args);
 	}
 
 }
