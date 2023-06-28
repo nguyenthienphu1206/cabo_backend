@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  customer:
+    container_name: customer
+    build:
+      context: ./customer
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      cabo-backend:
+    restart: no
+
+networks:
+  cabo-backend:

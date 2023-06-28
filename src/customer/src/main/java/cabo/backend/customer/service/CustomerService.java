@@ -21,9 +21,14 @@ public class CustomerService {
 
     private static final String COLLECTION_NAME = "customers";
 
-    public String getCustomerId(String idToken) throws ExecutionException, InterruptedException, FirebaseAuthException {
+    public String getCustomerId(String idToken) throws ExecutionException, InterruptedException {
 
-        FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        FirebaseToken decodedToken = null;
+        try {
+            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
 
         String uid = decodedToken.getUid();
 
