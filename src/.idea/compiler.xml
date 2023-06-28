@@ -11,7 +11,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="customer" target="17" />
+      <module name="customer" target="11" />
       <module name="firebase" target="17" />
       <module name="infobip" target="17" />
       <module name="messagebird" target="17" />
