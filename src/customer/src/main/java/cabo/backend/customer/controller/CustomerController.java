@@ -1,5 +1,6 @@
 package cabo.backend.customer.controller;
 
+import cabo.backend.customer.dto.CustomerDto;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
 import org.springframework.http.HttpStatus;
@@ -27,9 +28,9 @@ public class CustomerController {
     }
 
     @PostMapping("/customer")
-    public ResponseEntity<String> saveCustomer(@RequestBody Customer customer) throws ExecutionException, InterruptedException {
+    public ResponseEntity<String> saveCustomer(@RequestBody CustomerDto customerDto) throws ExecutionException, InterruptedException {
 
-        String response = customerService.saveCustomer(customer);
+        String response = customerService.saveCustomer(customerDto);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -40,5 +41,13 @@ public class CustomerController {
         Customer customer = customerService.getCustomerDetails(customerId);
 
         return new ResponseEntity<>(customer, HttpStatus.OK);
+    }
+
+    @PostMapping("/customer/check-phone-existence")
+    public ResponseEntity<Boolean> checkPhoneExistence(@RequestBody String phoneNumber) {
+
+        Boolean isExisted = customerService.checkPhoneExistence(phoneNumber);
+
+        return new ResponseEntity<>(isExisted, HttpStatus.OK);
     }
 }
