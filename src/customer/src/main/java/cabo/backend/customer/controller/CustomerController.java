@@ -1,12 +1,13 @@
 package cabo.backend.customer.controller;
 
-import cabo.backend.customer.dto.CustomerDto;
+import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -20,11 +21,13 @@ public class CustomerController {
     }
 
     @PostMapping("/customer/get-id")
-    public ResponseEntity<String> getCustomerId(@RequestBody String idToken) throws ExecutionException, InterruptedException {
+    public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
 
-        String customerId = customerService.getCustomerId(idToken);
+        String customerId = customerService.getCustomerId(requestIdTokenDto.getIdToken());
 
-        return new ResponseEntity<>(customerId, HttpStatus.OK);
+        ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
+
+        return new ResponseEntity<>(responseCustomerId, HttpStatus.OK);
     }
 
     @PostMapping("/customer")
@@ -44,10 +47,12 @@ public class CustomerController {
     }
 
     @PostMapping("/customer/check-phone-existence")
-    public ResponseEntity<Boolean> checkPhoneExistence(@RequestBody String phoneNumber) {
+    public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestBody RequestPhoneNumberDto requestPhoneNumberDto) {
 
-        Boolean isExisted = customerService.checkPhoneExistence(phoneNumber);
+        ResponseCheckPhoneExistence responseCheckPhoneExistence = new ResponseCheckPhoneExistence();
+        responseCheckPhoneExistence.setTimestamp(new Date());
+        responseCheckPhoneExistence.setIsExisted(customerService.checkPhoneExistence(requestPhoneNumberDto.getPhoneNumber()));
 
-        return new ResponseEntity<>(isExisted, HttpStatus.OK);
+        return new ResponseEntity<>(responseCheckPhoneExistence, HttpStatus.OK);
     }
 }
