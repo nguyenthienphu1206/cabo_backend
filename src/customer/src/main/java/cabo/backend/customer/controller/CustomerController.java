@@ -3,15 +3,19 @@ package cabo.backend.customer.controller;
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/v1")
+@Slf4j
 public class CustomerController {
 
     private CustomerService customerService;
@@ -47,11 +51,20 @@ public class CustomerController {
     }
 
     @PostMapping("/customer/check-phone-existence")
-    public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestBody RequestPhoneNumberDto requestPhoneNumberDto) {
+    public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestBody RequestPhoneNumberDto requestPhoneNumberDto, HttpServletRequest request) {
 
+        log.info(requestPhoneNumberDto.toString());
         ResponseCheckPhoneExistence responseCheckPhoneExistence = new ResponseCheckPhoneExistence();
         responseCheckPhoneExistence.setTimestamp(new Date());
         responseCheckPhoneExistence.setIsExisted(customerService.checkPhoneExistence(requestPhoneNumberDto.getPhoneNumber()));
+
+//        // Get the incoming request headers
+//        Enumeration<String> headerNames = request.getHeaderNames();
+//        while (headerNames.hasMoreElements()) {
+//            String headerName = headerNames.nextElement();
+//            String headerValue = request.getHeader(headerName);
+//            log.info(headerName + ": " + headerValue);
+//        }
 
         return new ResponseEntity<>(responseCheckPhoneExistence, HttpStatus.OK);
     }
