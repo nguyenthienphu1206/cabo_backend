@@ -9,7 +9,7 @@ public interface CustomerService {
 
     String saveCustomer(CustomerDto customerDto);
 
-    Customer getCustomerDetails(String customerId);
+    CustomerDto getCustomerDetails(String customerId);
 
     Boolean checkPhoneExistence(String phoneNumber);
 }

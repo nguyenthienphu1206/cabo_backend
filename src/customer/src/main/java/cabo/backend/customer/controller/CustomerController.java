@@ -43,11 +43,11 @@ public class CustomerController {
     }
 
     @GetMapping("/customer/{id}")
-    public ResponseEntity<Customer> getCustomerDetails(@PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CustomerDto> getCustomerDetails(@PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
 
-        Customer customer = customerService.getCustomerDetails(customerId);
+        CustomerDto customerDto = customerService.getCustomerDetails(customerId);
 
-        return new ResponseEntity<>(customer, HttpStatus.OK);
+        return new ResponseEntity<>(customerDto, HttpStatus.OK);
     }
 
     @PostMapping("/customer/check-phone-existence")
