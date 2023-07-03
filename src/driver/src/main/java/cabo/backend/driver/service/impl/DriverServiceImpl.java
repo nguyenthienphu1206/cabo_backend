@@ -1,16 +1,16 @@
-package cabo.backend.customer.service.impl;
+package cabo.backend.driver.service.impl;
 
-import cabo.backend.customer.dto.CustomerDto;
-import cabo.backend.customer.entity.Customer;
-import cabo.backend.customer.service.CustomerService;
+import cabo.backend.driver.dto.DriverDto;
+import cabo.backend.driver.entity.Driver;
+import cabo.backend.driver.service.DriverService;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,13 +18,15 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
-public class CustomerServiceImpl implements CustomerService {
-    private static final String COLLECTION_NAME = "customers";
+public class DriverServiceImpl implements DriverService {
+
+    private ModelMapper modelMapper;
+
+    private static final String COLLECTION_NAME = "drivers";
 
     @Override
-    public String getCustomerId(String idToken) {
-
-        String customerId = "";
+    public String getDriverId(String idToken) {
+        String driverId = "";
 
         FirebaseToken decodedToken = null;
         try {
@@ -53,25 +55,26 @@ public class CustomerServiceImpl implements CustomerService {
 
                 if (uid.equals(uidInDB)) {
 
-                    customerId = document.getId();
-                    log.info(customerId);
+                    driverId = document.getId();
+                    log.info(driverId);
 
-                    return customerId;
+                    return driverId;
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
-        return customerId;
+        return driverId;
     }
 
     @Override
-    public String saveCustomer(CustomerDto customerDto) {
-
+    public String saveDriver(DriverDto driverDto) {
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection(COLLECTION_NAME).document().set(customerDto);
+        Driver driver = modelMapper.map(driverDto, Driver.class);
+
+        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection(COLLECTION_NAME).document().set(driver);
 
         String timestamp = null;
         try {
@@ -84,11 +87,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDto getCustomerDetails(String customerId) {
-
+    public DriverDto getDriverDetails(String driverId) {
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(customerId);
+        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -99,18 +101,17 @@ public class CustomerServiceImpl implements CustomerService {
             throw new RuntimeException(e);
         }
 
-        CustomerDto customerDto = null;
+        Driver driver = null;
 
         if (document.exists()) {
-            customerDto = document.toObject(CustomerDto.class);
+            driver = document.toObject(Driver.class);
         }
 
-        return customerDto;
+        return modelMapper.map(driver, DriverDto.class);
     }
 
     @Override
     public Boolean checkPhoneExistence(String phoneNumber) {
-
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
