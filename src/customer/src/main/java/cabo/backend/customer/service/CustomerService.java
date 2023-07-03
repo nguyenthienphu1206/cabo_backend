@@ -5,7 +5,7 @@ import cabo.backend.customer.entity.Customer;
 
 public interface CustomerService {
 
-    String getCustomerId(String idToken);
+    String getCustomerId(String idToken, String fullName);
 
     String saveCustomer(CustomerDto customerDto);
 

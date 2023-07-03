@@ -27,7 +27,7 @@ public class CustomerController {
     @PostMapping("/customer/get-id")
     public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
 
-        String customerId = customerService.getCustomerId(requestIdTokenDto.getIdToken());
+        String customerId = customerService.getCustomerId(requestIdTokenDto.getIdToken(), requestIdTokenDto.getFullName());
 
         ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
 
