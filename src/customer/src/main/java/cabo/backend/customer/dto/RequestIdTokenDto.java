@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RequestIdTokenDto {
     private String idToken;
+    private String fullName;
 }
