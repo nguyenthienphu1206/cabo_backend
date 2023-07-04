@@ -1,6 +1,7 @@
 package cabo.backend.driver.service.impl;
 
 import cabo.backend.driver.dto.DriverDto;
+import cabo.backend.driver.dto.ResponseDriverDetails;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.service.DriverService;
 import com.google.api.core.ApiFuture;
@@ -8,6 +9,7 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -25,8 +27,9 @@ public class DriverServiceImpl implements DriverService {
     private static final String COLLECTION_NAME = "drivers";
 
     @Override
-    public String getDriverId(String idToken) {
+    public String getDriverId(String idToken, String fullName) {
         String driverId = "";
+        String phoneNumber = "";
 
         FirebaseToken decodedToken = null;
         try {
@@ -36,34 +39,26 @@ public class DriverServiceImpl implements DriverService {
         }
 
         String uid = decodedToken.getUid();
+        log.info("UID -----> " + uid);
+
+        try {
+            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
+            phoneNumber = userRecord.getPhoneNumber();
+
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
+        Driver driver = new Driver(uid, fullName, phoneNumber, "", null);
 
-        // Lấy tất cả các tài liệu trong collection
-        ApiFuture<QuerySnapshot> future = collectionReference.get();
+        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
 
-        List<QueryDocumentSnapshot> documents = null;
+        ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
 
-        try {
-            documents = future.get().getDocuments();
-
-            for (QueryDocumentSnapshot document : documents) {
-
-                String uidInDB = document.getString("uid");
-
-                if (uid.equals(uidInDB)) {
-
-                    driverId = document.getId();
-                    log.info(driverId);
-
-                    return driverId;
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        // Lấy document ID
+        driverId = documentReference.getId();
 
         return driverId;
     }
@@ -87,7 +82,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public DriverDto getDriverDetails(String driverId) {
+    public ResponseDriverDetails getDriverDetails(String driverId) {
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
@@ -97,6 +92,7 @@ public class DriverServiceImpl implements DriverService {
         DocumentSnapshot document = null;
         try {
             document = future.get();
+            log.info("Document ----> " + document);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -105,9 +101,18 @@ public class DriverServiceImpl implements DriverService {
 
         if (document.exists()) {
             driver = document.toObject(Driver.class);
+            log.info("driver ----> " + driver);
         }
 
-        return modelMapper.map(driver, DriverDto.class);
+        ResponseDriverDetails responseDriverDetails = ResponseDriverDetails.builder()
+                .uid(driver.getUid())
+                .fullName(driver.getFullName())
+                .phoneNumber(driver.getPhoneNumber())
+                .avatar(driver.getAvatar())
+                .carId(driver.getCarId())
+                .build();
+
+        return responseDriverDetails;
     }
 
     @Override

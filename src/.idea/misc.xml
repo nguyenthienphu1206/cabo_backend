@@ -5,6 +5,7 @@
       <list>
         <option value="$PROJECT_DIR$/customer/pom.xml" />
         <option value="$PROJECT_DIR$/driver/pom.xml" />
+        <option value="$PROJECT_DIR$/vehicle/pom.xml" />
       </list>
     </option>
   </component>

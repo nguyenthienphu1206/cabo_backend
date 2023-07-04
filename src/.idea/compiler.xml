@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="driver" />
         <module name="customer" />
+        <module name="vehicle" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -20,6 +21,7 @@
       <module name="speedSMS" target="17" />
       <module name="twilio" target="17" />
       <module name="vbcs" target="17" />
+      <module name="vehicle" target="11" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -32,6 +34,7 @@
       <module name="speedSMS" options="-parameters" />
       <module name="twilio" options="-parameters" />
       <module name="vbcs" options="-parameters" />
+      <module name="vehicle" options="-parameters" />
     </option>
   </component>
 </project>

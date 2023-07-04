@@ -25,9 +25,9 @@ public class DriverController {
     @PostMapping("/driver/get-id")
     public ResponseEntity<ResponseDriverId> getDriverId(@RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
 
-        String customerId = driverService.getDriverId(requestIdTokenDto.getIdToken());
+        String driverId = driverService.getDriverId(requestIdTokenDto.getIdToken(), requestIdTokenDto.getFullName());
 
-        ResponseDriverId responseCustomerId = new ResponseDriverId(new Date(), customerId);
+        ResponseDriverId responseCustomerId = new ResponseDriverId(new Date(), driverId);
 
         return new ResponseEntity<>(responseCustomerId, HttpStatus.OK);
     }
@@ -41,11 +41,13 @@ public class DriverController {
     }
 
     @GetMapping("/driver/{id}")
-    public ResponseEntity<DriverDto> getDriverDetails(@PathVariable("id") String driverId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<ResponseDriverDetails> getDriverDetails(@PathVariable("id") String driverId) throws ExecutionException, InterruptedException {
 
-        DriverDto driverDto = driverService.getDriverDetails(driverId);
+        ResponseDriverDetails responseDriverDetails = driverService.getDriverDetails(driverId);
 
-        return new ResponseEntity<>(driverDto, HttpStatus.OK);
+        //log.info("driverDto ----> " + driverDto);
+
+        return new ResponseEntity<>(responseDriverDetails, HttpStatus.OK);
     }
 
     @PostMapping("/driver/auth/phone-verify")
