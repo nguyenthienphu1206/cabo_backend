@@ -15,5 +15,5 @@ public interface DriverService {
 
     Boolean checkPhoneExistence(String idToken, String phoneNumber);
 
-    String registerDriverVehicle(String idToken, RequestRegisterVehicle requestRegisterVehicle);
+    String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle);
 }

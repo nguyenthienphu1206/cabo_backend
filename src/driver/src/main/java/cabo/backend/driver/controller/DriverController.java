@@ -70,7 +70,7 @@ public class DriverController {
                                                                    @PathVariable("id") String driverId,
                                                                    @RequestBody RequestRegisterVehicle requestRegisterVehicle) {
 
-        String vehicleId = driverService.registerDriverVehicle(bearerToken, requestRegisterVehicle);
+        String vehicleId = driverService.registerDriverVehicle(bearerToken, driverId, requestRegisterVehicle);
 
         ResponseVehicleId responseVehicleId = new ResponseVehicleId(new Date(), vehicleId);
 

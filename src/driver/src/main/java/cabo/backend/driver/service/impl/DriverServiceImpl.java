@@ -6,6 +6,7 @@ import cabo.backend.driver.dto.RequestRegistryInfo;
 import cabo.backend.driver.dto.ResponseDriverDetails;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.service.DriverService;
+import cabo.backend.driver.service.VehicleServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,9 +25,13 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class DriverServiceImpl implements DriverService {
 
+    private VehicleServiceClient vehicleServiceClient;
+
     private ModelMapper modelMapper;
 
     private static final String COLLECTION_NAME = "drivers";
+
+    private static final String COLLECTION_NAME_VEHICLE = "vehicles";
 
     @Override
     public String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo) {
@@ -156,8 +161,40 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public String registerDriverVehicle(String idToken, RequestRegisterVehicle requestRegisterVehicle) {
-        return null;
+    public String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+        // Đăng Kí vehicle và trả về vehicleId
+        String vehicleId = vehicleServiceClient.registerVehicle(idToken, requestRegisterVehicle);
+
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
+        DocumentReference vehicleDocumentReference = dbFirestore.collection(COLLECTION_NAME_VEHICLE).document(vehicleId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        DocumentSnapshot document;
+
+        try {
+            document = future.get();
+            log.info("Document ----> " + document);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (document.exists()) {
+
+            Driver driver = document.toObject(Driver.class);
+
+            if (driver != null) {
+                driver.setVehicleId(vehicleDocumentReference);
+
+                ApiFuture<WriteResult> writeResult = documentReference.set(driver);
+            }
+        }
+
+        return vehicleId;
     }
 
     private FirebaseToken decodeToken(String idToken) {
