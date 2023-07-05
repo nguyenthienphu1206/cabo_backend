@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestIdTokenDto {
-    private String idToken;
+
     private String fullName;
 }

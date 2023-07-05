@@ -28,12 +28,7 @@ public class CustomerServiceImpl implements CustomerService {
         String customerId = "";
         String phoneNumber = "";
 
-        FirebaseToken decodedToken = null;
-        try {
-            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         String uid = decodedToken.getUid();
         log.info("UID -----> " + uid);
@@ -90,7 +85,9 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public String saveCustomer(CustomerDto customerDto) {
+    public String saveCustomer(String idToken, CustomerDto customerDto) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -107,7 +104,9 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDto getCustomerDetails(String customerId) {
+    public CustomerDto getCustomerDetails(String idToken, String customerId) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -132,7 +131,9 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Boolean checkPhoneExistence(String phoneNumber) {
+    public Boolean checkPhoneExistence(String idToken, String phoneNumber) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -160,5 +161,18 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return false;
+    }
+
+    private FirebaseToken decodeToken(String idToken) {
+
+        FirebaseToken decodedToken;
+
+        try {
+            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+
+        return decodedToken;
     }
 }

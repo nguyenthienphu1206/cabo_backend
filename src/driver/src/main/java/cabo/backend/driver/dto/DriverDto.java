@@ -18,5 +18,5 @@ public class DriverDto {
     private String avatar;
 
     @JsonSerialize(using = DocumentReferenceSerializer.class)
-    private DocumentReference carId;
+    private DocumentReference vehicleId;
 }

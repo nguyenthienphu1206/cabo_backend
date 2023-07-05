@@ -1,6 +1,8 @@
 package cabo.backend.driver.service.impl;
 
 import cabo.backend.driver.dto.DriverDto;
+import cabo.backend.driver.dto.RequestRegisterVehicle;
+import cabo.backend.driver.dto.RequestRegistryInfo;
 import cabo.backend.driver.dto.ResponseDriverDetails;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.service.DriverService;
@@ -27,44 +29,46 @@ public class DriverServiceImpl implements DriverService {
     private static final String COLLECTION_NAME = "drivers";
 
     @Override
-    public String getDriverId(String idToken, String fullName) {
-        String driverId = "";
-        String phoneNumber = "";
+    public String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo) {
 
-        FirebaseToken decodedToken = null;
-        try {
-            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         String uid = decodedToken.getUid();
         log.info("UID -----> " + uid);
 
-        try {
-            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
-            phoneNumber = userRecord.getPhoneNumber();
-
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
+//            phoneNumber = userRecord.getPhoneNumber();
+//
+//        } catch (FirebaseAuthException e) {
+//            throw new RuntimeException(e);
+//        }
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        Driver driver = new Driver(uid, fullName, phoneNumber, "", null);
+        Driver driver = Driver.builder()
+                .uid(uid)
+                .fullName(requestRegistryInfo.getFullName())
+                .phoneNumber(requestRegistryInfo.getPhoneNumber())
+                .avatar("")
+                .vehicleId(null)
+                .build();
 
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
 
         ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
 
         // Lấy document ID
-        driverId = documentReference.getId();
+        String driverId = documentReference.getId();
 
         return driverId;
     }
 
     @Override
-    public String saveDriver(DriverDto driverDto) {
+    public String saveDriver(String idToken, DriverDto driverDto) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         Driver driver = modelMapper.map(driverDto, Driver.class);
@@ -82,7 +86,10 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public ResponseDriverDetails getDriverDetails(String driverId) {
+    public ResponseDriverDetails getDriverDetails(String idToken, String driverId) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
@@ -109,14 +116,17 @@ public class DriverServiceImpl implements DriverService {
                 .fullName(driver.getFullName())
                 .phoneNumber(driver.getPhoneNumber())
                 .avatar(driver.getAvatar())
-                .carId(driver.getCarId())
+                .carId(driver.getVehicleId())
                 .build();
 
         return responseDriverDetails;
     }
 
     @Override
-    public Boolean checkPhoneExistence(String phoneNumber) {
+    public Boolean checkPhoneExistence(String idToken, String phoneNumber) {
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
@@ -143,5 +153,23 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return false;
+    }
+
+    @Override
+    public String registerDriverVehicle(String idToken, RequestRegisterVehicle requestRegisterVehicle) {
+        return null;
+    }
+
+    private FirebaseToken decodeToken(String idToken) {
+
+        FirebaseToken decodedToken;
+
+        try {
+            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+
+        return decodedToken;
     }
 }

@@ -1,7 +1,6 @@
 package cabo.backend.customer.controller;
 
 import cabo.backend.customer.dto.*;
-import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -10,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -25,9 +23,10 @@ public class CustomerController {
     }
 
     @PostMapping("/customer/get-id")
-    public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
+    public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestHeader("Authorization") String bearerToken,
+                                                            @RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
 
-        String customerId = customerService.getCustomerId(requestIdTokenDto.getIdToken(), requestIdTokenDto.getFullName());
+        String customerId = customerService.getCustomerId(bearerToken, requestIdTokenDto.getFullName());
 
         ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
 
@@ -35,28 +34,34 @@ public class CustomerController {
     }
 
     @PostMapping("/customer")
-    public ResponseEntity<String> saveCustomer(@RequestBody CustomerDto customerDto) throws ExecutionException, InterruptedException {
+    public ResponseEntity<String> saveCustomer(@RequestHeader("Authorization") String bearerToken,
+                                               @RequestBody CustomerDto customerDto) throws ExecutionException, InterruptedException {
 
-        String response = customerService.saveCustomer(customerDto);
+        String response = customerService.saveCustomer(bearerToken, customerDto);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/customer/{id}")
-    public ResponseEntity<CustomerDto> getCustomerDetails(@PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CustomerDto> getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
+                                                          @PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
 
-        CustomerDto customerDto = customerService.getCustomerDetails(customerId);
+        log.info("Bearer Token ----> " + bearerToken);
+
+        CustomerDto customerDto = customerService.getCustomerDetails(bearerToken, customerId);
 
         return new ResponseEntity<>(customerDto, HttpStatus.OK);
     }
 
     @PostMapping("/customer/check-phone-existence")
-    public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestBody RequestPhoneNumberDto requestPhoneNumberDto, HttpServletRequest request) {
+    public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestHeader("Authorization") String bearerToken,
+                                                                           @RequestBody RequestPhoneNumberDto requestPhoneNumberDto,
+                                                                           HttpServletRequest request) {
 
         log.info(requestPhoneNumberDto.toString());
         ResponseCheckPhoneExistence responseCheckPhoneExistence = new ResponseCheckPhoneExistence();
         responseCheckPhoneExistence.setTimestamp(new Date());
-        responseCheckPhoneExistence.setIsExisted(customerService.checkPhoneExistence(requestPhoneNumberDto.getPhoneNumber()));
+        responseCheckPhoneExistence.setIsExisted(customerService.checkPhoneExistence(bearerToken, requestPhoneNumberDto.getPhoneNumber()));
 
 //        // Get the incoming request headers
 //        Enumeration<String> headerNames = request.getHeaderNames();
