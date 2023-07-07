@@ -1,6 +1,7 @@
 package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.CustomerDto;
+import cabo.backend.customer.dto.RequestRegisterCustomer;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
 import com.google.api.core.ApiFuture;
@@ -23,39 +24,31 @@ public class CustomerServiceImpl implements CustomerService {
     private static final String COLLECTION_NAME = "customers";
 
     @Override
-    public String getCustomerId(String idToken, String fullName) {
+    public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
 
-        String customerId = "";
-        String phoneNumber = "";
+        String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = null;
-        try {
-            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         String uid = decodedToken.getUid();
         log.info("UID -----> " + uid);
 
-        try {
-            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
-            phoneNumber = userRecord.getPhoneNumber();
-
-        } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
-        }
-
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        Customer customer = new Customer(uid, fullName, phoneNumber, "", false);
+        Customer customer = Customer.builder()
+                .uid(uid)
+                .fullName(requestRegisterCustomer.getFullName())
+                .phoneNumber(requestRegisterCustomer.getPhoneNumber())
+                .avatar("")
+                .vip(false)
+                .build();
 
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
 
         ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
 
         // Lấy document ID
-        customerId = documentReference.getId();
+        String customerId = documentReference.getId();
 
 //        Firestore dbFirestore = FirestoreClient.getFirestore();
 //
@@ -90,7 +83,11 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public String saveCustomer(CustomerDto customerDto) {
+    public String saveCustomer(String bearerToken, CustomerDto customerDto) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -107,7 +104,11 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDto getCustomerDetails(String customerId) {
+    public CustomerDto getCustomerDetails(String bearerToken, String customerId) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -132,7 +133,11 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Boolean checkPhoneExistence(String phoneNumber) {
+    public Boolean checkPhoneExistence(String bearerToken, String phoneNumber) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
@@ -160,5 +165,18 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return false;
+    }
+
+    private FirebaseToken decodeToken(String idToken) {
+
+        FirebaseToken decodedToken;
+
+        try {
+            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+
+        return decodedToken;
     }
 }

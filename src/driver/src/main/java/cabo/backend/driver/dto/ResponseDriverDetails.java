@@ -4,13 +4,15 @@ import cabo.backend.driver.serializer.DocumentReferenceSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.cloud.firestore.DocumentReference;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DriverDto {
+public class ResponseDriverDetails {
 
     private String uid;
     private String fullName;
@@ -18,5 +20,5 @@ public class DriverDto {
     private String avatar;
 
     @JsonSerialize(using = DocumentReferenceSerializer.class)
-    private DocumentReference vehicleId;
+    private DocumentReference carId;
 }

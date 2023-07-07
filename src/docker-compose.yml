@@ -12,5 +12,16 @@ services:
       cabo-backend:
     restart: no
 
+  driver:
+    container_name: driver
+    build:
+      context: ./driver
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      cabo-backend:
+    restart: no
+
 networks:
   cabo-backend:

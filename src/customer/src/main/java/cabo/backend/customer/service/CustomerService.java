@@ -1,15 +1,15 @@
 package cabo.backend.customer.service;
 
 import cabo.backend.customer.dto.CustomerDto;
-import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.dto.RequestRegisterCustomer;
 
 public interface CustomerService {
 
-    String getCustomerId(String idToken, String fullName);
+    String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
-    String saveCustomer(CustomerDto customerDto);
+    String saveCustomer(String idToken, CustomerDto customerDto);
 
-    CustomerDto getCustomerDetails(String customerId);
+    CustomerDto getCustomerDetails(String idToken, String customerId);
 
-    Boolean checkPhoneExistence(String phoneNumber);
+    Boolean checkPhoneExistence(String idToken, String phoneNumber);
 }

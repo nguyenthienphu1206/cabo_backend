@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestIdTokenDto {
-    private String idToken;
+public class RequestRegistryInfo {
+
+    private String fullName;
+
+    private String phoneNumber;
 }

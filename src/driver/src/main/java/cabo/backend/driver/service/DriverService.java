@@ -1,14 +1,19 @@
 package cabo.backend.driver.service;
 
 import cabo.backend.driver.dto.DriverDto;
+import cabo.backend.driver.dto.RequestRegisterVehicle;
+import cabo.backend.driver.dto.RequestRegistryInfo;
+import cabo.backend.driver.dto.ResponseDriverDetails;
 
 public interface DriverService {
 
-    String getDriverId(String idToken);
+    String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo);
 
-    String saveDriver(DriverDto driverDto);
+    String saveDriver(String idToken, DriverDto driverDto);
 
-    DriverDto getDriverDetails(String driverId);
+    ResponseDriverDetails getDriverDetails(String idToken, String driverId);
 
-    Boolean checkPhoneExistence(String phoneNumber);
+    Boolean checkPhoneExistence(String idToken, String phoneNumber);
+
+    String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle);
 }
