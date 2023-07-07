@@ -10,6 +10,5 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface VehicleServiceClient {
 
     @PostMapping("/api/v1/vehicle/register")
-    String registerVehicle(@RequestHeader("Authorization") String bearerToken,
-                                                  @RequestBody RequestRegisterVehicle requestRegisterVehicle);
+    String registerVehicle(@RequestHeader("Authentication") String bearerToken, @RequestBody RequestRegisterVehicle requestRegisterVehicle);
 }

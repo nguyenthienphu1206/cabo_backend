@@ -16,6 +16,7 @@ import com.google.firebase.auth.UserRecord;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class DriverServiceImpl implements DriverService {
 
+    @Autowired
     private VehicleServiceClient vehicleServiceClient;
 
     private ModelMapper modelMapper;
@@ -34,7 +36,9 @@ public class DriverServiceImpl implements DriverService {
     private static final String COLLECTION_NAME_VEHICLE = "vehicles";
 
     @Override
-    public String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo) {
+    public String registerInfo(String bearerToken, RequestRegistryInfo requestRegistryInfo) {
+
+        String idToken = bearerToken.substring(7);
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
@@ -70,7 +74,9 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public String saveDriver(String idToken, DriverDto driverDto) {
+    public String saveDriver(String bearerToken, DriverDto driverDto) {
+
+        String idToken = bearerToken.substring(7);
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
@@ -91,7 +97,9 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public ResponseDriverDetails getDriverDetails(String idToken, String driverId) {
+    public ResponseDriverDetails getDriverDetails(String bearerToken, String driverId) {
+
+        String idToken = bearerToken.substring(7);
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
@@ -128,7 +136,9 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public Boolean checkPhoneExistence(String idToken, String phoneNumber) {
+    public Boolean checkPhoneExistence(String bearerToken, String phoneNumber) {
+
+        String idToken = bearerToken.substring(7);
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
@@ -161,11 +171,16 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle) {
+    public String registerDriverVehicle(String bearerToken, String driverId, RequestRegisterVehicle requestRegisterVehicle) {
+
+        String idToken = bearerToken.substring(7);
+
+        log.info("idToken -----> " + idToken);
 
         FirebaseToken decodedToken = decodeToken(idToken);
+
         // Đăng Kí vehicle và trả về vehicleId
-        String vehicleId = vehicleServiceClient.registerVehicle(idToken, requestRegisterVehicle);
+        String vehicleId = vehicleServiceClient.registerVehicle(bearerToken, requestRegisterVehicle);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 

@@ -35,7 +35,7 @@ public class VehicleServiceImpl implements VehicleService {
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
 
         ApiFuture<WriteResult> collectionApiFuture = documentReference.set(vehicle);
-
+        log.info("Test2 ----> ");
         String vehicleId = documentReference.getId();
 
         return vehicleId;

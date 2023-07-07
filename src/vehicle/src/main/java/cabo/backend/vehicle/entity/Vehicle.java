@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Vehicle {
-    private String slot;
+    private int slot;
 
     private String type;
 

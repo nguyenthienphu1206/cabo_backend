@@ -22,11 +22,11 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @PostMapping("/customer/get-id")
+    @PostMapping("/customer/auth/register")
     public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestHeader("Authorization") String bearerToken,
-                                                            @RequestBody RequestIdTokenDto requestIdTokenDto) throws ExecutionException, InterruptedException {
+                                                            @RequestBody RequestRegisterCustomer requestRegisterCustomer) throws ExecutionException, InterruptedException {
 
-        String customerId = customerService.getCustomerId(bearerToken, requestIdTokenDto.getFullName());
+        String customerId = customerService.registerCustomer(bearerToken, requestRegisterCustomer);
 
         ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
 

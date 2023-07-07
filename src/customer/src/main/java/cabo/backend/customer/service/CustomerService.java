@@ -1,11 +1,11 @@
 package cabo.backend.customer.service;
 
 import cabo.backend.customer.dto.CustomerDto;
-import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.dto.RequestRegisterCustomer;
 
 public interface CustomerService {
 
-    String getCustomerId(String idToken, String fullName);
+    String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
     String saveCustomer(String idToken, CustomerDto customerDto);
 

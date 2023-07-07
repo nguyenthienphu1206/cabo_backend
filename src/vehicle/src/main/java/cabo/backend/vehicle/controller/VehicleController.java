@@ -20,7 +20,7 @@ public class VehicleController {
     public ResponseEntity<String> registerVehicle(@RequestHeader("Authorization") String bearerToken,
                                                   @RequestBody VehicleDto vehicleDto) {
 
-        String vehicleId = vehicleService.registerVehicle(bearerToken, vehicleDto);
+        String vehicleId = vehicleService.registerVehicle(bearerToken.substring(7), vehicleDto);
 
         return new ResponseEntity<>(vehicleId, HttpStatus.CREATED);
     }
