@@ -180,7 +180,7 @@ public class DriverServiceImpl implements DriverService {
         FirebaseToken decodedToken = decodeToken(idToken);
 
         // Đăng Kí vehicle và trả về vehicleId
-        String vehicleId = vehicleServiceClient.registerVehicle(bearerToken, requestRegisterVehicle);
+        String vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 

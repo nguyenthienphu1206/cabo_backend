@@ -17,10 +17,9 @@ public class VehicleController {
     }
 
     @PostMapping("/vehicle/register")
-    public ResponseEntity<String> registerVehicle(@RequestHeader("Authorization") String bearerToken,
-                                                  @RequestBody VehicleDto vehicleDto) {
+    public ResponseEntity<String> registerVehicle(@RequestBody VehicleDto vehicleDto) {
 
-        String vehicleId = vehicleService.registerVehicle(bearerToken.substring(7), vehicleDto);
+        String vehicleId = vehicleService.registerVehicle(vehicleDto);
 
         return new ResponseEntity<>(vehicleId, HttpStatus.CREATED);
     }

@@ -24,11 +24,14 @@ public class VehicleServiceImpl implements VehicleService {
     private static final String COLLECTION_NAME = "vehicles";
 
     @Override
-    public String registerVehicle(String idToken, VehicleDto vehicleDto) {
+    public String registerVehicle(VehicleDto vehicleDto) {
 
-        FirebaseToken decodedToken = decodeToken(idToken);
-
-        Vehicle vehicle = modelMapper.map(vehicleDto, Vehicle.class);
+        Vehicle vehicle = Vehicle.builder()
+                .slot(vehicleDto.getSlot())
+                .type(vehicleDto.getType())
+                .regNo(vehicleDto.getRegNo())
+                .brand(vehicleDto.getBrand())
+                .build();
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 

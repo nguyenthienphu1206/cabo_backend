@@ -4,5 +4,5 @@ import cabo.backend.vehicle.dto.VehicleDto;
 
 public interface VehicleService {
 
-    String registerVehicle(String idToken, VehicleDto vehicleDto);
+    String registerVehicle(VehicleDto vehicleDto);
 }
