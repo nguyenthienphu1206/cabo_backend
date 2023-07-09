@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+
+  config-server:
+    container_name: config-server
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
+    networks:
+      - spring
+    restart: no
+
   customer:
     container_name: customer
     build:
@@ -8,8 +22,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
+    depends_on:
+      - config-server
     networks:
-      cabo-backend:
+      - spring
     restart: no
 
   driver:
@@ -19,9 +37,30 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
+    depends_on:
+      - config-server
+      - vehicle
     networks:
-      cabo-backend:
+      - spring
+    restart: no
+
+  vehicle:
+    container_name: vehicle
+    build:
+      context: ./vehicle
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
+    depends_on:
+      - config-server
+    networks:
+      - spring
     restart: no
 
 networks:
-  cabo-backend:
+  spring:
+    driver: bridge

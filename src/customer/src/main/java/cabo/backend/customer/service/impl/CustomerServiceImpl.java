@@ -35,49 +35,38 @@ public class CustomerServiceImpl implements CustomerService {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        Customer customer = Customer.builder()
-                .uid(uid)
-                .fullName(requestRegisterCustomer.getFullName())
-                .phoneNumber(requestRegisterCustomer.getPhoneNumber())
-                .avatar("")
-                .vip(false)
-                .build();
+        CollectionReference collectionRef = dbFirestore.collection(COLLECTION_NAME);
 
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
+        Query query = collectionRef.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
-        ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
+        String customerId;
 
-        // Lấy document ID
-        String customerId = documentReference.getId();
+        try {
+            QuerySnapshot querySnapshot = querySnapshotFuture.get();
 
-//        Firestore dbFirestore = FirestoreClient.getFirestore();
-//
-//        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-//
-//        // Lấy tất cả các tài liệu trong collection
-//        ApiFuture<QuerySnapshot> future = collectionReference.get();
-//
-//        List<QueryDocumentSnapshot> documents = null;
-//
-//        try {
-//            documents = future.get().getDocuments();
-//
-//            for (QueryDocumentSnapshot document : documents) {
-//
-//                String uidInDB = document.getString("uid");
-//
-//                if (uid.equals(uidInDB)) {
-//
-//                    //customerId = document.getId();
-//                    numberPhone = Objects.requireNonNull(document.get("phoneNumber")).toString();
-//                    log.info(numberPhone);
-//
-//                    return numberPhone;
-//                }
-//            }
-//        } catch (InterruptedException | ExecutionException e) {
-//            throw new RuntimeException(e);
-//        }
+            if (querySnapshot.isEmpty()) {
+
+                Customer customer = Customer.builder()
+                        .uid(uid)
+                        .fullName(requestRegisterCustomer.getFullName())
+                        .phoneNumber(requestRegisterCustomer.getPhoneNumber())
+                        .avatar("")
+                        .vip(false)
+                        .build();
+
+                DocumentReference documentReference = collectionRef.document();
+
+                ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
+
+                customerId = documentReference.getId();
+            }
+            else {
+                customerId = querySnapshot.getDocuments().get(0).getId();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
 
         return customerId;
     }

@@ -40,10 +40,10 @@ public class DriverServiceImpl implements DriverService {
 
         String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
-        String uid = decodedToken.getUid();
-        log.info("UID -----> " + uid);
+        //String uid = decodedToken.getUid();
+        //log.info("UID -----> " + uid);
 
 //        try {
 //            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
@@ -55,20 +55,38 @@ public class DriverServiceImpl implements DriverService {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        Driver driver = Driver.builder()
-                .uid(uid)
-                .fullName(requestRegistryInfo.getFullName())
-                .phoneNumber(requestRegistryInfo.getPhoneNumber())
-                .avatar("")
-                .vehicleId(null)
-                .build();
+        CollectionReference collectionRef = dbFirestore.collection(COLLECTION_NAME);
 
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
+        Query query = collectionRef.whereEqualTo("phoneNumber", requestRegistryInfo.getPhoneNumber());
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
-        ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
+        String driverId;
 
-        // Lấy document ID
-        String driverId = documentReference.getId();
+        try {
+            QuerySnapshot querySnapshot = querySnapshotFuture.get();
+
+            if (querySnapshot.isEmpty()) {
+
+                Driver driver = Driver.builder()
+                        .uid("")
+                        .fullName(requestRegistryInfo.getFullName())
+                        .phoneNumber(requestRegistryInfo.getPhoneNumber())
+                        .avatar("")
+                        .vehicleId(null)
+                        .build();
+
+                DocumentReference documentReference = collectionRef.document();
+
+                ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
+
+                driverId = documentReference.getId();
+            }
+            else {
+                driverId = querySnapshot.getDocuments().get(0).getId();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
 
         return driverId;
     }
@@ -177,7 +195,7 @@ public class DriverServiceImpl implements DriverService {
 
         log.info("idToken -----> " + idToken);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         // Đăng Kí vehicle và trả về vehicleId
         String vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);

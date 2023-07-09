@@ -2,6 +2,8 @@ package cabo.backend.driver.controller;
 
 import cabo.backend.driver.dto.*;
 import cabo.backend.driver.service.DriverService;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
