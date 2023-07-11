@@ -1,7 +1,6 @@
 package cabo.backend.customer.dto;
 
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.GeoPoint;
+import cabo.backend.customer.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,28 +1,29 @@
 package cabo.backend.customer.service.impl;
 
-import cabo.backend.customer.dto.CustomerDto;
-import cabo.backend.customer.dto.RequestRegisterCustomer;
-import cabo.backend.customer.dto.ResponseOverview;
+import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
+import cabo.backend.customer.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
 public class CustomerServiceImpl implements CustomerService {
     private static final String COLLECTION_NAME = "customers";
+
+    @Autowired
+    private TripServiceClient tripServiceClient;
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -160,11 +161,23 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public ResponseOverview getOverview(String bearerToken, String customerId) {
 
+        String idToken = bearerToken.substring(7);
 
+        //FirebaseToken decodedToken = decodeToken(idToken);
+        log.info("Test");
+        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
 
+        log.info("Test1 " + tripDto);
+        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);
 
+        log.info("Test2 " + responseTotalTrip);
+        ResponseOverview responseOverview = ResponseOverview.builder()
+                .totalTrip(responseTotalTrip.getTotalTrip())
+                .recentTrip(tripDto)
+                .build();
+        log.info("Test3");
 
-        return null;
+        return responseOverview;
     }
 
     private FirebaseToken decodeToken(String idToken) {
