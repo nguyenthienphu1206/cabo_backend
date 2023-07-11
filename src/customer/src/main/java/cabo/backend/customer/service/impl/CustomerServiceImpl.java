@@ -2,6 +2,7 @@ package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.CustomerDto;
 import cabo.backend.customer.dto.RequestRegisterCustomer;
+import cabo.backend.customer.dto.ResponseOverview;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
 import com.google.api.core.ApiFuture;
@@ -154,6 +155,16 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return false;
+    }
+
+    @Override
+    public ResponseOverview getOverview(String bearerToken, String customerId) {
+
+
+
+
+
+        return null;
     }
 
     private FirebaseToken decodeToken(String idToken) {

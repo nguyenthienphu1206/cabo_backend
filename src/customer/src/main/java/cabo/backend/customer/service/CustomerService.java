@@ -2,6 +2,7 @@ package cabo.backend.customer.service;
 
 import cabo.backend.customer.dto.CustomerDto;
 import cabo.backend.customer.dto.RequestRegisterCustomer;
+import cabo.backend.customer.dto.ResponseOverview;
 
 public interface CustomerService {
 
@@ -12,4 +13,6 @@ public interface CustomerService {
     CustomerDto getCustomerDetails(String idToken, String customerId);
 
     Boolean checkPhoneExistence(String idToken, String phoneNumber);
+
+    ResponseOverview getOverview(String idToken, String customerId);
 }

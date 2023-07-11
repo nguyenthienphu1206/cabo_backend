@@ -7,7 +7,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="config-server" />
+        <module name="trip" />
         <module name="driver" />
         <module name="customer" />
         <module name="vehicle" />
@@ -21,6 +21,7 @@
       <module name="infobip" target="17" />
       <module name="messagebird" target="17" />
       <module name="speedSMS" target="17" />
+      <module name="trip" target="11" />
       <module name="twilio" target="17" />
       <module name="vbcs" target="17" />
       <module name="vehicle" target="11" />
@@ -35,6 +36,7 @@
       <module name="infobip" options="-parameters" />
       <module name="messagebird" options="-parameters" />
       <module name="speedSMS" options="-parameters" />
+      <module name="trip" options="-parameters" />
       <module name="twilio" options="-parameters" />
       <module name="vbcs" options="-parameters" />
       <module name="vehicle" options="-parameters" />
