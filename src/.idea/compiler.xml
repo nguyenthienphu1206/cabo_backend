@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="trip" />
+        <module name="google-maps" />
         <module name="driver" />
         <module name="customer" />
         <module name="vehicle" />
@@ -18,6 +19,7 @@
       <module name="customer" target="11" />
       <module name="driver" target="11" />
       <module name="firebase" target="11" />
+      <module name="google-maps" target="11" />
       <module name="infobip" target="17" />
       <module name="messagebird" target="17" />
       <module name="speedSMS" target="17" />
@@ -33,6 +35,7 @@
       <module name="customer" options="-parameters" />
       <module name="driver" options="-parameters" />
       <module name="firebase" options="-parameters" />
+      <module name="google-maps" options="-parameters" />
       <module name="infobip" options="-parameters" />
       <module name="messagebird" options="-parameters" />
       <module name="speedSMS" options="-parameters" />

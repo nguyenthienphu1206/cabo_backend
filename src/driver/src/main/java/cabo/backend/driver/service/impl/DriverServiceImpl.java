@@ -1,9 +1,7 @@
 package cabo.backend.driver.service.impl;
 
-import cabo.backend.driver.dto.DriverDto;
-import cabo.backend.driver.dto.RequestRegisterVehicle;
-import cabo.backend.driver.dto.RequestRegistryInfo;
-import cabo.backend.driver.dto.ResponseDriverDetails;
+import cabo.backend.driver.dto.*;
+import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.service.DriverService;
 import cabo.backend.driver.service.VehicleServiceClient;
@@ -19,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -34,6 +33,8 @@ public class DriverServiceImpl implements DriverService {
     private static final String COLLECTION_NAME = "drivers";
 
     private static final String COLLECTION_NAME_VEHICLE = "vehicles";
+
+    private static final String COLLECTION_NAME_ATTENDANCE = "attendance";
 
     @Override
     public String registerInfo(String bearerToken, RequestRegistryInfo requestRegistryInfo) {
@@ -228,6 +229,37 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return vehicleId;
+    }
+
+    @Override
+    public ResponseCheckIn checkIn(String bearerToken, RequestCheckIn requestCheckIn) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
+
+        Attendance attendance = Attendance.builder()
+                .checkInAt(requestCheckIn.getCheckInAt())
+                .checkOutAt(requestCheckIn.getCheckOutAt())
+                .driverId(requestCheckIn.getDriverId())
+                .build();
+
+        ApiFuture<WriteResult> collectionApiFuture = collectionReference.document().set(attendance);
+
+        Date timestamp = null;
+        try {
+            timestamp = collectionApiFuture.get().getUpdateTime().toDate();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        ResponseCheckIn responseCheckIn = new ResponseCheckIn(timestamp, "Successfully");
+
+        return responseCheckIn;
     }
 
     private FirebaseToken decodeToken(String idToken) {

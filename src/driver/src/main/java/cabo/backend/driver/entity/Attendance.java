@@ -1,4 +1,4 @@
-package cabo.backend.customer.dto;
+package cabo.backend.driver.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseOverview {
+public class Attendance {
 
-    private long totalTrip;
+    private Long checkInAt;
 
-    private ResponseRecentTrip recentTrip;
+    private Long checkOutAt;
+
+    private String driverId;
 }

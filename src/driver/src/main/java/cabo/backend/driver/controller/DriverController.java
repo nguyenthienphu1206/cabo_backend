@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -26,7 +27,7 @@ public class DriverController {
 
     @PostMapping("/driver/auth/register")
     public ResponseEntity<ResponseDriverId> registerDriverInfo(@RequestHeader("Authorization") String bearerToken,
-                                                               @RequestBody RequestRegistryInfo requestRegistryInfo) throws ExecutionException, InterruptedException {
+                                                               @Valid @RequestBody RequestRegistryInfo requestRegistryInfo) throws ExecutionException, InterruptedException {
 
         String driverId = driverService.registerInfo(bearerToken, requestRegistryInfo);
 
@@ -70,12 +71,28 @@ public class DriverController {
     @PostMapping("/driver/{id}/vehicle/register")
     public ResponseEntity<ResponseVehicleId> registerDriverVehicle(@RequestHeader("Authorization") String bearerToken,
                                                                    @PathVariable("id") String driverId,
-                                                                   @RequestBody RequestRegisterVehicle requestRegisterVehicle) {
+                                                                   @Valid @RequestBody RequestRegisterVehicle requestRegisterVehicle) {
 
         String vehicleId = driverService.registerDriverVehicle(bearerToken, driverId, requestRegisterVehicle);
 
         ResponseVehicleId responseVehicleId = new ResponseVehicleId(new Date(), vehicleId);
 
         return new ResponseEntity<>(responseVehicleId, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/driver/check-in")
+    public ResponseEntity<ResponseCheckIn> checkIn(@RequestHeader("Authorization") String bearerToken,
+                                                   @Valid @RequestBody RequestCheckIn requestCheckIn) {
+
+        ResponseCheckIn responseCheckIn;
+        try {
+            responseCheckIn = driverService.checkIn(bearerToken, requestCheckIn);
+
+            return new ResponseEntity<>(responseCheckIn, HttpStatus.CREATED);
+        } catch (Exception e) {
+            responseCheckIn = new ResponseCheckIn(new Date(), "Failed");
+
+            return new ResponseEntity<>(responseCheckIn, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

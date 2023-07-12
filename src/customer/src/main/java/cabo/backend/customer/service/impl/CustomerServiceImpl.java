@@ -3,6 +3,7 @@ package cabo.backend.customer.service.impl;
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
 import cabo.backend.customer.service.CustomerService;
+import cabo.backend.customer.service.GoogleMapsServiceClient;
 import cabo.backend.customer.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -24,6 +25,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
     private TripServiceClient tripServiceClient;
+
+    @Autowired
+    private GoogleMapsServiceClient googleMapsServiceClient;
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -167,13 +171,29 @@ public class CustomerServiceImpl implements CustomerService {
         log.info("Test");
         TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
 
+        String customerOrderLocation = googleMapsServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
+                                    tripDto.getCustomerOrderLocation().getLongitude());
+
+        String toLocation = googleMapsServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
+                                    tripDto.getToLocation().getLongitude());
+
+        ResponseRecentTrip responseRecentTrip = ResponseRecentTrip.builder()
+                .cost(tripDto.getCost())
+                .distance(tripDto.getDistance())
+                .startTime(tripDto.getStartTime())
+                .endTime(tripDto.getEndTime())
+                .customerOrderLocation(customerOrderLocation)
+                .toLocation(toLocation)
+                .paymentType(tripDto.getPaymentType())
+                .build();
+
         log.info("Test1 " + tripDto);
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);
 
         log.info("Test2 " + responseTotalTrip);
         ResponseOverview responseOverview = ResponseOverview.builder()
                 .totalTrip(responseTotalTrip.getTotalTrip())
-                .recentTrip(tripDto)
+                .recentTrip(responseRecentTrip)
                 .build();
         log.info("Test3");
 
