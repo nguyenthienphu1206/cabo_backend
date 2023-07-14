@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Trip {
 
-    private Long cost;
+    private long cost;
 
     private DocumentReference customerId;
 
@@ -21,11 +21,11 @@ public class Trip {
 
     private double distance;
 
-    private Long startTime;
+    private long startTime;
 
-    private Long pickUpTime;
+    private long pickUpTime;
 
-    private Long endTime;
+    private long endTime;
 
     private GeoPoint customerOrderLocation;
 

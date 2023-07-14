@@ -14,5 +14,9 @@ public interface DriverService {
 
     String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle);
 
-    ResponseCheckIn checkIn(String bearerToken, RequestCheckIn requestCheckIn);
+    ResponseCheckInOut checkIn(String bearerToken, RequestCheckIn requestCheckIn);
+
+    ResponseCheckInOut checkOut(String bearerToken, RequestCheckOut requestCheckOut);
+
+    ResponseOverview getOverview(String idToken, String driverId);
 }

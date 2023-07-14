@@ -1,6 +1,8 @@
 package cabo.backend.trip.controller;
 
+import cabo.backend.trip.dto.ResponseAverageIncomePerDrive;
 import cabo.backend.trip.dto.ResponseRecentTripFromCustomer;
+import cabo.backend.trip.dto.ResponseRecentTripFromDriver;
 import cabo.backend.trip.dto.ResponseTotalTrip;
 import cabo.backend.trip.service.TripService;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,14 @@ public class TripController {
         return new ResponseEntity<>(responseRecentTripFromCustomer, HttpStatus.OK);
     }
 
+    @GetMapping("/trip/recent-trip/driver/{driverId}")
+    public ResponseEntity<ResponseRecentTripFromDriver> getRecentTripFromDriver(@PathVariable("driverId") String driverId) {
+
+        ResponseRecentTripFromDriver responseRecentTripFromDriver = tripService.getRecentTripFromDriver(driverId);
+
+        return new ResponseEntity<>(responseRecentTripFromDriver, HttpStatus.OK);
+    }
+
     @GetMapping("/trip/total-trip/{collection}/{id}")
     public ResponseEntity<ResponseTotalTrip> getTotalTrip(@PathVariable("collection") String collection,
                                                           @PathVariable("id") String id) {
@@ -32,5 +42,13 @@ public class TripController {
         ResponseTotalTrip responseTotalTrip = tripService.getTotalTrip(collection, id);
 
         return new ResponseEntity<>(responseTotalTrip, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/average-income/driver/{driverId}")
+    public ResponseEntity<ResponseAverageIncomePerDrive> getAverageIncomePerDrive(@PathVariable("driverId") String driverId) {
+
+        ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripService.getAverageIncomePerDrive(driverId);
+
+        return new ResponseEntity<>(responseAverageIncomePerDrive, HttpStatus.OK);
     }
 }

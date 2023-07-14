@@ -8,13 +8,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="trip" />
-        <module name="google-maps" />
         <module name="driver" />
         <module name="customer" />
         <module name="vehicle" />
+        <module name="bing-map" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="bing-map" target="11" />
       <module name="config-server" target="11" />
       <module name="customer" target="11" />
       <module name="driver" target="11" />
@@ -31,6 +32,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="bing-map" options="-parameters" />
       <module name="config-server" options="-parameters" />
       <module name="customer" options="-parameters" />
       <module name="driver" options="-parameters" />

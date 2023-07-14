@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseTotalTrip {
 
-    private Long totalTrip;
+    private long totalTrip;
 }

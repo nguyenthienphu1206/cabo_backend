@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseRecentTripFromCustomer {
 
-    private Long cost;
+    private long cost;
 
     private double distance;
 
-    private Long startTime;
+    private long startTime;
 
-    private Long endTime;
+    private long endTime;
 
     private GeoPoint customerOrderLocation;
 

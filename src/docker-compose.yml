@@ -36,6 +36,28 @@ services:
       - spring
     restart: no
 
+  trip:
+    container_name: trip
+    build:
+      context: ./trip
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - spring
+    restart: no
+
+  bing-map:
+    container_name: bing-map
+    build:
+      context: ./bing-map
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    networks:
+      - spring
+    restart: no
+
 networks:
   spring:
     driver: bridge

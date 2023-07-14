@@ -2,14 +2,11 @@ package cabo.backend.driver.controller;
 
 import cabo.backend.driver.dto.*;
 import cabo.backend.driver.service.DriverService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
@@ -81,18 +78,36 @@ public class DriverController {
     }
 
     @PostMapping("/driver/check-in")
-    public ResponseEntity<ResponseCheckIn> checkIn(@RequestHeader("Authorization") String bearerToken,
-                                                   @Valid @RequestBody RequestCheckIn requestCheckIn) {
+    public ResponseEntity<ResponseCheckInOut> checkIn(@RequestHeader("Authorization") String bearerToken,
+                                                      @Valid @RequestBody RequestCheckIn requestCheckIn) {
 
-        ResponseCheckIn responseCheckIn;
+        ResponseCheckInOut responseCheckIn = driverService.checkIn(bearerToken, requestCheckIn);
+
+        return new ResponseEntity<>(responseCheckIn, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/driver/check-out")
+    public ResponseEntity<ResponseCheckInOut> checkOut(@RequestHeader("Authorization") String bearerToken,
+                                                      @Valid @RequestBody RequestCheckOut requestCheckOut) {
+
+        ResponseCheckInOut responseCheckOut;
         try {
-            responseCheckIn = driverService.checkIn(bearerToken, requestCheckIn);
+            responseCheckOut = driverService.checkOut(bearerToken, requestCheckOut);
 
-            return new ResponseEntity<>(responseCheckIn, HttpStatus.CREATED);
+            return new ResponseEntity<>(responseCheckOut, HttpStatus.CREATED);
         } catch (Exception e) {
-            responseCheckIn = new ResponseCheckIn(new Date(), "Failed");
+            responseCheckOut = new ResponseCheckInOut(new Date(), "Failed");
 
-            return new ResponseEntity<>(responseCheckIn, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(responseCheckOut, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/driver/{id}/overview")
+    public ResponseEntity<ResponseOverview> getOverview(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("id") String driverId) {
+
+        ResponseOverview responseOverview = driverService.getOverview(bearerToken, driverId);
+
+        return new ResponseEntity<>(responseOverview, HttpStatus.OK);
     }
 }

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TripDto {
 
-    private Long cost;
+    private long cost;
 
     private DocumentReference customerId;
 

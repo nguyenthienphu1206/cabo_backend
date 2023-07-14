@@ -7,7 +7,7 @@
         <option value="$PROJECT_DIR$/driver/pom.xml" />
         <option value="$PROJECT_DIR$/vehicle/pom.xml" />
         <option value="$PROJECT_DIR$/trip/pom.xml" />
-        <option value="$PROJECT_DIR$/google-maps/pom.xml" />
+        <option value="$PROJECT_DIR$/bing-map/pom.xml" />
       </list>
     </option>
   </component>

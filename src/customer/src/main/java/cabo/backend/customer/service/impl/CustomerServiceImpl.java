@@ -2,8 +2,8 @@ package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.service.BingMapServiceClient;
 import cabo.backend.customer.service.CustomerService;
-import cabo.backend.customer.service.GoogleMapsServiceClient;
 import cabo.backend.customer.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -27,7 +27,7 @@ public class CustomerServiceImpl implements CustomerService {
     private TripServiceClient tripServiceClient;
 
     @Autowired
-    private GoogleMapsServiceClient googleMapsServiceClient;
+    private BingMapServiceClient bingMapServiceClient;
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -168,13 +168,13 @@ public class CustomerServiceImpl implements CustomerService {
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
-        log.info("Test");
+        //log.info("Test");
         TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
 
-        String customerOrderLocation = googleMapsServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
+        String customerOrderLocation = bingMapServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
                                     tripDto.getCustomerOrderLocation().getLongitude());
 
-        String toLocation = googleMapsServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
+        String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
                                     tripDto.getToLocation().getLongitude());
 
         ResponseRecentTrip responseRecentTrip = ResponseRecentTrip.builder()
@@ -187,15 +187,15 @@ public class CustomerServiceImpl implements CustomerService {
                 .paymentType(tripDto.getPaymentType())
                 .build();
 
-        log.info("Test1 " + tripDto);
+        //log.info("Test1 " + tripDto);
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);
 
-        log.info("Test2 " + responseTotalTrip);
+        //log.info("Test2 " + responseTotalTrip);
         ResponseOverview responseOverview = ResponseOverview.builder()
                 .totalTrip(responseTotalTrip.getTotalTrip())
                 .recentTrip(responseRecentTrip)
                 .build();
-        log.info("Test3");
+        //log.info("Test3");
 
         return responseOverview;
     }
