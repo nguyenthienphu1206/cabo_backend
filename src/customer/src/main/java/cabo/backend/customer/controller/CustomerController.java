@@ -73,4 +73,13 @@ public class CustomerController {
 
         return new ResponseEntity<>(responseCheckPhoneExistence, HttpStatus.OK);
     }
+
+    @GetMapping("/customer/{id}/overview")
+    public ResponseEntity<ResponseOverview> getOverview(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("id") String customerId) {
+
+        ResponseOverview responseOverview = customerService.getOverview(bearerToken, customerId);
+
+        return new ResponseEntity<>(responseOverview, HttpStatus.OK);
+    }
 }

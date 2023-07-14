@@ -1,20 +1,6 @@
 version: "3.8"
 
 services:
-
-  config-server:
-    container_name: config-server
-    build:
-      context: ./config-server
-      dockerfile: Dockerfile
-    ports:
-      - "8888:8888"
-    environment:
-      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
-    networks:
-      - spring
-    restart: no
-
   customer:
     container_name: customer
     build:
@@ -22,10 +8,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
-    depends_on:
-      - config-server
     networks:
       - spring
     restart: no
@@ -37,10 +19,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
-    environment:
-      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
     depends_on:
-      - config-server
       - vehicle
     networks:
       - spring
@@ -53,10 +32,28 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8082:8082"
-    environment:
-      - SPRING_CLOUD_CONFIG_URI=http://localhost:8888
-    depends_on:
-      - config-server
+    networks:
+      - spring
+    restart: no
+
+  trip:
+    container_name: trip
+    build:
+      context: ./trip
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - spring
+    restart: no
+
+  bing-map:
+    container_name: bing-map
+    build:
+      context: ./bing-map
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
     networks:
       - spring
     restart: no

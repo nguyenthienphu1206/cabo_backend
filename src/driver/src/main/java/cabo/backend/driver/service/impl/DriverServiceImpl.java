@@ -1,25 +1,28 @@
 package cabo.backend.driver.service.impl;
 
-import cabo.backend.driver.dto.DriverDto;
-import cabo.backend.driver.dto.RequestRegisterVehicle;
-import cabo.backend.driver.dto.RequestRegistryInfo;
-import cabo.backend.driver.dto.ResponseDriverDetails;
+import cabo.backend.driver.dto.*;
+import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
+import cabo.backend.driver.exception.CheckInException;
+import cabo.backend.driver.service.BingMapServiceClient;
 import cabo.backend.driver.service.DriverService;
+import cabo.backend.driver.service.TripServiceClient;
 import cabo.backend.driver.service.VehicleServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -29,11 +32,19 @@ public class DriverServiceImpl implements DriverService {
     @Autowired
     private VehicleServiceClient vehicleServiceClient;
 
+    @Autowired
+    private TripServiceClient tripServiceClient;
+
+    @Autowired
+    private BingMapServiceClient bingMapServiceClient;
+
     private ModelMapper modelMapper;
 
     private static final String COLLECTION_NAME = "drivers";
 
     private static final String COLLECTION_NAME_VEHICLE = "vehicles";
+
+    private static final String COLLECTION_NAME_ATTENDANCE = "attendance";
 
     @Override
     public String registerInfo(String bearerToken, RequestRegistryInfo requestRegistryInfo) {
@@ -73,6 +84,7 @@ public class DriverServiceImpl implements DriverService {
                         .phoneNumber(requestRegistryInfo.getPhoneNumber())
                         .avatar("")
                         .vehicleId(null)
+                        .isWorking(false)
                         .build();
 
                 DocumentReference documentReference = collectionRef.document();
@@ -228,6 +240,161 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return vehicleId;
+    }
+
+    @Override
+    public ResponseCheckInOut checkIn(String bearerToken, RequestCheckIn requestCheckIn) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
+
+        CollectionReference collectionReferenceDriver = dbFirestore.collection(COLLECTION_NAME);
+
+        DocumentReference documentReference = collectionReferenceDriver.document(requestCheckIn.getDriverId());
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        DocumentSnapshot document = null;
+        Date timestamp = null;
+
+        try {
+            document = future.get();
+
+            if (document.exists()) {
+                if (Objects.equals(document.get("isWorking"), false)) {
+
+                    Attendance attendance = Attendance.builder()
+                            .checkInAt(requestCheckIn.getCheckInAt())
+                            .checkOutAt(requestCheckIn.getCheckOutAt())
+                            .driverId(requestCheckIn.getDriverId())
+                            .build();
+
+                    Driver driver = document.toObject(Driver.class);
+
+                    driver.setIsWorking(true);
+
+                    ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
+                            .set(driver);
+
+                    ApiFuture<WriteResult> collectionApiFuture = collectionReference.document().set(attendance);
+
+                    timestamp = collectionApiFuture.get().getUpdateTime().toDate();
+                }
+                else {
+                    throw new CheckInException(HttpStatus.BAD_REQUEST, "Checking in ...");
+                }
+
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        ResponseCheckInOut responseCheckIn = new ResponseCheckInOut(timestamp, "Successfully");
+
+        return responseCheckIn;
+    }
+
+    @Override
+    public ResponseCheckInOut checkOut(String bearerToken, RequestCheckOut requestCheckOut) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
+
+        CollectionReference collectionReferenceDriver = dbFirestore.collection(COLLECTION_NAME);
+
+        DocumentReference documentReference = collectionReferenceDriver.document(requestCheckOut.getDriverId());
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        Query query = collectionReference.whereEqualTo("driverId", requestCheckOut.getDriverId())
+                .orderBy("checkInAt", Query.Direction.DESCENDING)
+                .limit(1);
+
+        ResponseCheckInOut responseCheckOut;
+
+        try {
+            // Set isWorking = false
+            DocumentSnapshot document = future.get();
+
+            Driver driver = document.toObject(Driver.class);
+
+            driver.setIsWorking(false);
+
+            ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
+                    .set(driver);
+
+            // Set checkOutAt
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            String documentId = documents.get(0).getId();
+
+            Attendance attendance = documents.get(0).toObject(Attendance.class);
+
+            attendance.setCheckOutAt(requestCheckOut.getCheckOutAt());
+
+            ApiFuture<WriteResult> collectionApiFuture = collectionReference.document(documentId).set(attendance);
+
+            Date timestamp = collectionApiFuture.get().getUpdateTime().toDate();
+
+            responseCheckOut = new ResponseCheckInOut(timestamp, "Successfully");
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return responseCheckOut;
+    }
+
+    @Override
+    public ResponseOverview getOverview(String bearerToken, String driverId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+        //log.info("Test");
+        TripDto tripDto = tripServiceClient.getRecentTripFromDriver(driverId);
+
+        String driverStartLocation = bingMapServiceClient.getAddress(tripDto.getDriverStartLocation().getLatitude(),
+                tripDto.getDriverStartLocation().getLongitude());
+
+        String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
+                tripDto.getToLocation().getLongitude());
+
+        ResponseRecentTrip responseRecentTrip = ResponseRecentTrip.builder()
+                .cost(tripDto.getCost())
+                .distance(tripDto.getDistance())
+                .startTime(tripDto.getStartTime())
+                .pickUpTime(tripDto.getPickUpTime())
+                .endTime(tripDto.getEndTime())
+                .driverStartLocation(driverStartLocation)
+                .toLocation(toLocation)
+                .build();
+
+        //log.info("Test1 " + tripDto);
+        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("drivers", driverId);
+
+        ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripServiceClient.getAverageIncomePerDrive(driverId);
+
+        //log.info("Test2 " + responseTotalTrip);
+        ResponseOverview responseOverview = ResponseOverview.builder()
+                .averageIncomePerDrive(responseAverageIncomePerDrive.getAverageIncomePerDrive())
+                .totalTrip(responseTotalTrip.getTotalTrip())
+                .recentTrip(responseRecentTrip)
+                .build();
+        //log.info("Test3");
+
+        return responseOverview;
     }
 
     private FirebaseToken decodeToken(String idToken) {
