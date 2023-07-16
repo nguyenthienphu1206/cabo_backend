@@ -91,15 +91,11 @@ public class DriverController {
                                                       @Valid @RequestBody RequestCheckOut requestCheckOut) {
 
         ResponseCheckInOut responseCheckOut;
-        try {
-            responseCheckOut = driverService.checkOut(bearerToken, requestCheckOut);
 
-            return new ResponseEntity<>(responseCheckOut, HttpStatus.CREATED);
-        } catch (Exception e) {
-            responseCheckOut = new ResponseCheckInOut(new Date(), "Failed");
+        responseCheckOut = driverService.checkOut(bearerToken, requestCheckOut);
 
-            return new ResponseEntity<>(responseCheckOut, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(responseCheckOut, HttpStatus.CREATED);
+
     }
 
     @GetMapping("/driver/{id}/overview")
