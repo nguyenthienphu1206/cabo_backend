@@ -4,6 +4,7 @@ import cabo.backend.driver.dto.*;
 import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.exception.CheckInException;
+import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.service.BingMapServiceClient;
 import cabo.backend.driver.service.DriverService;
 import cabo.backend.driver.service.TripServiceClient;
@@ -323,16 +324,6 @@ public class DriverServiceImpl implements DriverService {
         ResponseCheckInOut responseCheckOut;
 
         try {
-            // Set isWorking = false
-            DocumentSnapshot document = future.get();
-
-            Driver driver = document.toObject(Driver.class);
-
-            driver.setIsWorking(false);
-
-            ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
-                    .set(driver);
-
             // Set checkOutAt
             QuerySnapshot querySnapshot = query.get().get();
             List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
@@ -341,13 +332,28 @@ public class DriverServiceImpl implements DriverService {
 
             Attendance attendance = documents.get(0).toObject(Attendance.class);
 
-            attendance.setCheckOutAt(requestCheckOut.getCheckOutAt());
+            if (documents.get(0).get("checkOutAt") == null) {
+                attendance.setCheckOutAt(requestCheckOut.getCheckOutAt());
 
-            ApiFuture<WriteResult> collectionApiFuture = collectionReference.document(documentId).set(attendance);
+                ApiFuture<WriteResult> collectionApiFuture = collectionReference.document(documentId).set(attendance);
 
-            Date timestamp = collectionApiFuture.get().getUpdateTime().toDate();
+                Date timestamp = collectionApiFuture.get().getUpdateTime().toDate();
 
-            responseCheckOut = new ResponseCheckInOut(timestamp, "Successfully");
+                // Set isWorking = false
+                DocumentSnapshot document = future.get();
+
+                Driver driver = document.toObject(Driver.class);
+
+                driver.setIsWorking(false);
+
+                ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
+                        .set(driver);
+
+                responseCheckOut = new ResponseCheckInOut(timestamp, "Successfully");
+            }
+            else {
+                throw new CheckOutException(HttpStatus.INTERNAL_SERVER_ERROR, "Driver has checked out");
+            }
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);

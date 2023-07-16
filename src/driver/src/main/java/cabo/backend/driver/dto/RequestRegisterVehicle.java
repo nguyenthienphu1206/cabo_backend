@@ -11,7 +11,6 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 public class RequestRegisterVehicle {
 
-    @NotEmpty(message = "Slot should not empty")
     private int slot;
 
     @NotEmpty(message = "Type should not empty")
