@@ -171,21 +171,27 @@ public class CustomerServiceImpl implements CustomerService {
         //log.info("Test");
         TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
 
-        String customerOrderLocation = bingMapServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
-                                    tripDto.getCustomerOrderLocation().getLongitude());
+        ResponseRecentTrip responseRecentTrip = null;
 
-        String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
-                                    tripDto.getToLocation().getLongitude());
+        if (tripDto != null) {
+            String customerOrderLocation = bingMapServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
+                    tripDto.getCustomerOrderLocation().getLongitude());
 
-        ResponseRecentTrip responseRecentTrip = ResponseRecentTrip.builder()
-                .cost(tripDto.getCost())
-                .distance(tripDto.getDistance())
-                .startTime(tripDto.getStartTime())
-                .endTime(tripDto.getEndTime())
-                .customerOrderLocation(customerOrderLocation)
-                .toLocation(toLocation)
-                .paymentType(tripDto.getPaymentType())
-                .build();
+            String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
+                    tripDto.getToLocation().getLongitude());
+
+            responseRecentTrip = ResponseRecentTrip.builder()
+                    .cost(tripDto.getCost())
+                    .distance(tripDto.getDistance())
+                    .startTime(tripDto.getStartTime())
+                    .endTime(tripDto.getEndTime())
+                    .customerOrderLocation(customerOrderLocation)
+                    .toLocation(toLocation)
+                    .paymentType(tripDto.getPaymentType())
+                    .build();
+        }
+
+
 
         //log.info("Test1 " + tripDto);
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);

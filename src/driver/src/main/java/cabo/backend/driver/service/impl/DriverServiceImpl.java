@@ -368,27 +368,33 @@ public class DriverServiceImpl implements DriverService {
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
-        //log.info("Test");
+        log.info("Test");
         TripDto tripDto = tripServiceClient.getRecentTripFromDriver(driverId);
 
-        String driverStartLocation = bingMapServiceClient.getAddress(tripDto.getDriverStartLocation().getLatitude(),
-                tripDto.getDriverStartLocation().getLongitude());
+        ResponseRecentTrip responseRecentTrip = null;
 
-        String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
-                tripDto.getToLocation().getLongitude());
+        if (tripDto != null) {
+            String driverStartLocation = bingMapServiceClient.getAddress(tripDto.getDriverStartLocation().getLatitude(),
+                    tripDto.getDriverStartLocation().getLongitude());
 
-        ResponseRecentTrip responseRecentTrip = ResponseRecentTrip.builder()
-                .cost(tripDto.getCost())
-                .distance(tripDto.getDistance())
-                .startTime(tripDto.getStartTime())
-                .pickUpTime(tripDto.getPickUpTime())
-                .endTime(tripDto.getEndTime())
-                .driverStartLocation(driverStartLocation)
-                .toLocation(toLocation)
-                .build();
+            String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
+                    tripDto.getToLocation().getLongitude());
+
+            responseRecentTrip = ResponseRecentTrip.builder()
+                    .cost(tripDto.getCost())
+                    .distance(tripDto.getDistance())
+                    .startTime(tripDto.getStartTime())
+                    .pickUpTime(tripDto.getPickUpTime())
+                    .endTime(tripDto.getEndTime())
+                    .driverStartLocation(driverStartLocation)
+                    .toLocation(toLocation)
+                    .build();
+        }
 
         //log.info("Test1 " + tripDto);
+
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("drivers", driverId);
+
 
         ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripServiceClient.getAverageIncomePerDrive(driverId);
 
