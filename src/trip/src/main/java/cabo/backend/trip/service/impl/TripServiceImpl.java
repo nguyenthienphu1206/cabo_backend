@@ -181,6 +181,10 @@ public class TripServiceImpl implements TripService {
             List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
             count = documents.size();
 
+            if (count == 0) {
+                count = 1;
+            }
+
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
@@ -190,6 +194,7 @@ public class TripServiceImpl implements TripService {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+
 
         ResponseAverageIncomePerDrive responseAverageIncomePerDrive = new ResponseAverageIncomePerDrive(totalIncome / count);
 
