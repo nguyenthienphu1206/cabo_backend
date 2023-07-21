@@ -5,6 +5,7 @@ import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
+import cabo.backend.driver.exception.ResourceNotFoundException;
 import cabo.backend.driver.service.BingMapServiceClient;
 import cabo.backend.driver.service.DriverService;
 import cabo.backend.driver.service.TripServiceClient;
@@ -210,13 +211,9 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        // Đăng Kí vehicle và trả về vehicleId
-        String vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);
-
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
-        DocumentReference vehicleDocumentReference = dbFirestore.collection(COLLECTION_NAME_VEHICLE).document(vehicleId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -229,7 +226,11 @@ public class DriverServiceImpl implements DriverService {
             throw new RuntimeException(e);
         }
 
+        String vehicleId = "";
         if (document.exists()) {
+            // Đăng Kí vehicle và trả về vehicleId
+            vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);
+            DocumentReference vehicleDocumentReference = dbFirestore.collection(COLLECTION_NAME_VEHICLE).document(vehicleId);
 
             Driver driver = document.toObject(Driver.class);
 
@@ -238,6 +239,9 @@ public class DriverServiceImpl implements DriverService {
 
                 ApiFuture<WriteResult> writeResult = documentReference.set(driver);
             }
+        }
+        else {
+            throw new ResourceNotFoundException("Document", "DriverId", driverId);
         }
 
         return vehicleId;
