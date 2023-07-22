@@ -1,14 +1,7 @@
 steps:
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        # Di chuyển vào thư mục dự án
-        cd /cabo_backend/src/driver
-        # Thực hiện các lệnh bash khác ở đây, ví dụ:
-        ls
-        mvn clean install -DskipTests=true
+  - name: 'maven'
+    entrypoint: 'mvn'
+    args: ['clean', 'install', '-DskipTests']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/cohesive-gadget-368604/driver:latest', '/cabo_backend/src/driver']
   - name: 'gcr.io/cloud-builders/docker'
