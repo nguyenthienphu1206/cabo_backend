@@ -1,4 +1,7 @@
 steps:
+  - name: 'bash'
+    entrypoint: 'bash'
+    args: ['-c', 'cd /cabo_backend/src/driver']
   - name: 'maven'
     entrypoint: 'mvn'
     args: ['clean', 'install', '-DskipTests']
