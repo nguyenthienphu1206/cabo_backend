@@ -21,10 +21,28 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class TripServiceImpl implements TripService {
 
-    private static final String COLLECTION_NAME = "trips";
+    private static final String COLLECTION_NAM_DRIVER = "drivers";
+
+    private final CollectionReference collectionRefDrvier;
+
     private static final String COLLECTION_NAME_CUSTOMER = "customers";
 
-    private static final String COLLECTION_NAME_DRIVER = "drivers";
+    private final CollectionReference collectionRefCustomer;
+
+    private static final String COLLECTION_NAME_TRIP = "trips";
+
+    private final CollectionReference collectionRefTrip;
+
+    private Firestore dbFirestore;
+
+    public  TripServiceImpl(Firestore dbFirestore) {
+
+        this.dbFirestore = dbFirestore;
+
+        this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
+        this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
+        this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
+    }
 
     @Override
     public ResponseRecentTripFromCustomer getRecentTripFromCustomer(String customerId) {
@@ -33,15 +51,9 @@ public class TripServiceImpl implements TripService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference customerRef = collectionRefCustomer.document(customerId);
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
-        CollectionReference collectionReferenceCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
-
-        DocumentReference customerRef = collectionReferenceCustomer.document(customerId);
-
-        Query query = collectionReference.whereEqualTo("customerId", customerRef)
+        Query query = collectionRefTrip.whereEqualTo("customerId", customerRef)
                 .orderBy("startTime", Query.Direction.DESCENDING)
                 .limit(1);
 
@@ -80,15 +92,11 @@ public class TripServiceImpl implements TripService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference driverRef = collectionRefDrvier.document(driverId);
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
+        log.info("DriverRef: " + driverRef);
 
-        CollectionReference collectionReferenceDriver = dbFirestore.collection(COLLECTION_NAME_DRIVER);
-
-        DocumentReference driverRef = collectionReferenceDriver.document(driverId);
-
-        Query query = collectionReference.whereEqualTo("driverId", driverRef)
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverRef)
                 .orderBy("startTime", Query.Direction.DESCENDING)
                 .limit(1);
 
@@ -127,10 +135,6 @@ public class TripServiceImpl implements TripService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
         CollectionReference collectionReferenceUser = dbFirestore.collection(collection);
 
         DocumentReference userRef = collectionReferenceUser.document(id);
@@ -140,7 +144,7 @@ public class TripServiceImpl implements TripService {
             field = "customerId";
         }
 
-        Query query = collectionReference.whereEqualTo(field, userRef);
+        Query query = collectionRefTrip.whereEqualTo(field, userRef);
 
         AggregateQuerySnapshot snapshot = null;
         try {
@@ -163,15 +167,9 @@ public class TripServiceImpl implements TripService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference userRef = collectionRefDrvier.document(driverId);
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
-        CollectionReference collectionReferenceUser = dbFirestore.collection(COLLECTION_NAME_DRIVER);
-
-        DocumentReference userRef = collectionReferenceUser.document(driverId);
-
-        Query query = collectionReference.whereEqualTo("driverId", userRef);
+        Query query = collectionRefTrip.whereEqualTo("driverId", userRef);
 
         double totalIncome = 0.0;
         long count = 1;

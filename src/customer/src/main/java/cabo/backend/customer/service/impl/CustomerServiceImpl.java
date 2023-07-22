@@ -21,13 +21,26 @@ import java.util.concurrent.ExecutionException;
 @Service
 @Slf4j
 public class CustomerServiceImpl implements CustomerService {
-    private static final String COLLECTION_NAME = "customers";
 
     @Autowired
     private TripServiceClient tripServiceClient;
 
     @Autowired
     private BingMapServiceClient bingMapServiceClient;
+
+    private static final String COLLECTION_NAME_CUSTOMER = "customers";
+
+    private final CollectionReference collectionRefCustomer;
+
+    private Firestore dbFirestore;
+
+    public CustomerServiceImpl(Firestore dbFirestore) {
+
+        this.dbFirestore = dbFirestore;
+
+        this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
+    }
+
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -39,11 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
         String uid = decodedToken.getUid();
         log.info("UID -----> " + uid);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionRef = dbFirestore.collection(COLLECTION_NAME);
-
-        Query query = collectionRef.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
+        Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
         String customerId;
@@ -61,7 +70,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .vip(false)
                         .build();
 
-                DocumentReference documentReference = collectionRef.document();
+                DocumentReference documentReference = collectionRefCustomer.document();
 
                 ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
 
@@ -84,9 +93,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection(COLLECTION_NAME).document().set(customerDto);
+        ApiFuture<WriteResult> collectionApiFuture = collectionRefCustomer.document().set(customerDto);
 
         String timestamp = null;
         try {
@@ -107,7 +114,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(customerId);
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -134,12 +141,8 @@ public class CustomerServiceImpl implements CustomerService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
         // Lấy tất cả các tài liệu trong collection
-        ApiFuture<QuerySnapshot> future = collectionReference.get();
+        ApiFuture<QuerySnapshot> future = collectionRefCustomer.get();
 
         List<QueryDocumentSnapshot> documents = null;
 

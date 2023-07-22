@@ -42,11 +42,28 @@ public class DriverServiceImpl implements DriverService {
 
     private ModelMapper modelMapper;
 
-    private static final String COLLECTION_NAME = "drivers";
+    private static final String COLLECTION_NAM_DRIVER = "drivers";
+
+    private final CollectionReference collectionRefDrvier;
 
     private static final String COLLECTION_NAME_VEHICLE = "vehicles";
 
+    private final CollectionReference collectionRefVehicle;
+
     private static final String COLLECTION_NAME_ATTENDANCE = "attendance";
+
+    private final CollectionReference collectionAttendance;
+
+    private Firestore dbFirestore;
+
+    public DriverServiceImpl(Firestore firestore) {
+
+        this.dbFirestore = firestore;
+
+        this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
+        this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
+        this.collectionAttendance = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
+    }
 
     @Override
     public String registerInfo(String bearerToken, RequestRegistryInfo requestRegistryInfo) {
@@ -66,11 +83,7 @@ public class DriverServiceImpl implements DriverService {
 //            throw new RuntimeException(e);
 //        }
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionRef = dbFirestore.collection(COLLECTION_NAME);
-
-        Query query = collectionRef.whereEqualTo("phoneNumber", requestRegistryInfo.getPhoneNumber());
+        Query query = collectionRefDrvier.whereEqualTo("phoneNumber", requestRegistryInfo.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
         String driverId;
@@ -89,7 +102,7 @@ public class DriverServiceImpl implements DriverService {
                         .isWorking(false)
                         .build();
 
-                DocumentReference documentReference = collectionRef.document();
+                DocumentReference documentReference = collectionRefDrvier.document();
 
                 ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
 
@@ -112,11 +125,10 @@ public class DriverServiceImpl implements DriverService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
 
         Driver driver = modelMapper.map(driverDto, Driver.class);
 
-        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection(COLLECTION_NAME).document().set(driver);
+        ApiFuture<WriteResult> collectionApiFuture = collectionRefDrvier.document().set(driver);
 
         String timestamp = null;
         try {
@@ -135,9 +147,7 @@ public class DriverServiceImpl implements DriverService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -174,12 +184,8 @@ public class DriverServiceImpl implements DriverService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
         // Lấy tất cả các tài liệu trong collection
-        ApiFuture<QuerySnapshot> future = collectionReference.get();
+        ApiFuture<QuerySnapshot> future = collectionRefDrvier.get();
 
         List<QueryDocumentSnapshot> documents = null;
 
@@ -211,9 +217,7 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(driverId);
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -230,7 +234,7 @@ public class DriverServiceImpl implements DriverService {
         if (document.exists()) {
             // Đăng Kí vehicle và trả về vehicleId
             vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);
-            DocumentReference vehicleDocumentReference = dbFirestore.collection(COLLECTION_NAME_VEHICLE).document(vehicleId);
+            DocumentReference vehicleDocumentReference = collectionRefVehicle.document(vehicleId);
 
             Driver driver = document.toObject(Driver.class);
 
@@ -254,13 +258,8 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
-
-        CollectionReference collectionReferenceDriver = dbFirestore.collection(COLLECTION_NAME);
-
-        DocumentReference documentReference = collectionReferenceDriver.document(requestCheckIn.getDriverId());
+        DocumentReference documentReference = collectionRefDrvier.document(requestCheckIn.getDriverId());
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -283,10 +282,10 @@ public class DriverServiceImpl implements DriverService {
 
                     driver.setIsWorking(true);
 
-                    ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
+                    ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                             .set(driver);
 
-                    ApiFuture<WriteResult> collectionApiFuture = collectionReference.document().set(attendance);
+                    ApiFuture<WriteResult> collectionApiFuture = collectionAttendance.document().set(attendance);
 
                     timestamp = collectionApiFuture.get().getUpdateTime().toDate();
                 }
@@ -311,17 +310,12 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
 
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
-
-        CollectionReference collectionReferenceDriver = dbFirestore.collection(COLLECTION_NAME);
-
-        DocumentReference documentReference = collectionReferenceDriver.document(requestCheckOut.getDriverId());
+        DocumentReference documentReference = collectionRefDrvier.document(requestCheckOut.getDriverId());
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
-        Query query = collectionReference.whereEqualTo("driverId", requestCheckOut.getDriverId())
+        Query query = collectionAttendance.whereEqualTo("driverId", requestCheckOut.getDriverId())
                 .orderBy("checkInAt", Query.Direction.DESCENDING)
                 .limit(1);
 
@@ -330,7 +324,9 @@ public class DriverServiceImpl implements DriverService {
         try {
             // Set checkOutAt
             QuerySnapshot querySnapshot = query.get().get();
+
             List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
 
             String documentId = documents.get(0).getId();
 
@@ -339,7 +335,7 @@ public class DriverServiceImpl implements DriverService {
             if (documents.get(0).get("checkOutAt") == null) {
                 attendance.setCheckOutAt(requestCheckOut.getCheckOutAt());
 
-                ApiFuture<WriteResult> collectionApiFuture = collectionReference.document(documentId).set(attendance);
+                ApiFuture<WriteResult> collectionApiFuture = collectionAttendance.document(documentId).set(attendance);
 
                 Date timestamp = collectionApiFuture.get().getUpdateTime().toDate();
 
@@ -350,9 +346,9 @@ public class DriverServiceImpl implements DriverService {
 
                 driver.setIsWorking(false);
 
-                ApiFuture<WriteResult> collectionApiFutureDriver = collectionReferenceDriver.document(document.getId())
+                ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                         .set(driver);
-
+                log.info("Test4");
                 responseCheckOut = new ResponseCheckInOut(timestamp, "Successfully");
             }
             else {

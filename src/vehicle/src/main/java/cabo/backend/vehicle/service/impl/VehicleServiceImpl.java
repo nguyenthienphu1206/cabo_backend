@@ -4,6 +4,7 @@ import cabo.backend.vehicle.dto.VehicleDto;
 import cabo.backend.vehicle.entity.Vehicle;
 import cabo.backend.vehicle.service.VehicleService;
 import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
@@ -21,7 +22,18 @@ public class VehicleServiceImpl implements VehicleService {
 
     private ModelMapper modelMapper;
 
-    private static final String COLLECTION_NAME = "vehicles";
+    private static final String COLLECTION_NAME_VEHICLE = "vehicles";
+
+    private final CollectionReference collectionRefVehicle;
+
+    private Firestore dbFirestore;
+
+    public VehicleServiceImpl(Firestore dbFirestore) {
+
+        this.dbFirestore = dbFirestore;
+
+        this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
+    }
 
     @Override
     public String registerVehicle(VehicleDto vehicleDto) {
@@ -33,9 +45,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .brand(vehicleDto.getBrand())
                 .build();
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document();
+        DocumentReference documentReference = collectionRefVehicle.document();
 
         ApiFuture<WriteResult> collectionApiFuture = documentReference.set(vehicle);
         log.info("Test2 ----> ");
