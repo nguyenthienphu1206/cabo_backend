@@ -1,5 +1,7 @@
 steps:
+  - name: 'gcr.io/cloud-builders/bash'
+    args: ['-c', 'cd /cabo_backend/src/driver && mvn clean install -DskipTests=true']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/cohesive-gadget-368604/driver:latest', '.']
+    args: ['build', '-t', 'gcr.io/cohesive-gadget-368604/driver:latest', '/cabo_backend/src/driver']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/cohesive-gadget-368604/driver:latest']
