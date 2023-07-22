@@ -1,5 +1,5 @@
 steps:
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args: ['-c', 'cd /cabo_backend/src/driver']
   - name: 'maven'
