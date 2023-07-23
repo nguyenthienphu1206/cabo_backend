@@ -3,6 +3,7 @@ package cabo.backend.driver.service.impl;
 import cabo.backend.driver.dto.*;
 import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
+import cabo.backend.driver.entity.FcmToken;
 import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.exception.ResourceNotFoundException;
@@ -54,6 +55,10 @@ public class DriverServiceImpl implements DriverService {
 
     private final CollectionReference collectionAttendance;
 
+    private static final String COLLECTION_NAME_FCMTOKEN = "fcmTokens";
+
+    private final CollectionReference collectionRefFcmToken;
+
     private Firestore dbFirestore;
 
     public DriverServiceImpl(Firestore firestore) {
@@ -63,6 +68,7 @@ public class DriverServiceImpl implements DriverService {
         this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
         this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
         this.collectionAttendance = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
+        this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
     }
 
     @Override
@@ -407,6 +413,23 @@ public class DriverServiceImpl implements DriverService {
         //log.info("Test3");
 
         return responseOverview;
+    }
+
+    @Override
+    public void subscribeNotification(String bearerToken, String fcmToken) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
+        String uid = decodedToken.getUid();
+
+        FcmToken savedFcmToken = FcmToken.builder()
+                .fcmToken(fcmToken)
+                .uid(uid)
+                .build();
+
+        ApiFuture<WriteResult> collectionApiFuture = collectionRefFcmToken.document().set(savedFcmToken);
     }
 
     private FirebaseToken decodeToken(String idToken) {

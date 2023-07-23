@@ -37,15 +37,44 @@ public class BingMapServiceImpl implements BingMapService {
 
         String address = null;
 
-        if (response != null && response.getResourceSets() != null && response.getResourceSets().length > 0) {
-            ResourceSet resourceSet = response.getResourceSets()[0];
-            if (resourceSet.getResources() != null && resourceSet.getResources().length > 0) {
-                address = resourceSet.getResources()[0].getName();
+        if (response != null && response.getResourceSets() != null && response.getResourceSets().size() > 0) {
+            ResourceSet resourceSet = response.getResourceSets().get(0);
+            if (resourceSet.getResources() != null && resourceSet.getResources().size() > 0) {
+                address = resourceSet.getResources().get(0).getName();
             }
         }
 
         log.info("Address ---> " + address);
 
         return address;
+    }
+
+    @Override
+    public Double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2) {
+
+        String BING_MAPS_API_URL = "https://dev.virtualearth.net/REST/v1/Routes/DistanceMatrix";
+
+        String url = String.format("%s?origins=%f,%f&destinations=%f,%f&travelMode=driving&key=%s",
+                BING_MAPS_API_URL, latitude_1, longitude_1, latitude_2, longitude_2, apiKey);
+
+        BingMapsResponse response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(BingMapsResponse.class)
+                .block();
+
+        log.info("Response: " + response);
+
+        if (response != null) {
+
+            Double distance = response.getResourceSets().get(0)
+                    .getResources().get(0)
+                    .getResults().get(0)
+                    .getTravelDistance();
+
+            return distance;
+        }
+
+        return 0.0;
     }
 }

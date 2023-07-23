@@ -209,6 +209,31 @@ public class CustomerServiceImpl implements CustomerService {
         return responseOverview;
     }
 
+    @Override
+    public ResponseEstimateCostAndDistance getEstimateCostAndDistance(String bearerToken,
+                                                                      RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        double fromLat = requestOriginsAndDestinationsLocation.getFromLocation().getLatitude();
+        double fromLon = requestOriginsAndDestinationsLocation.getFromLocation().getLongitude();
+        double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
+        double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
+
+        Double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon);
+
+        Double estimateCost = getEstimateCost(distance);
+
+        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = ResponseEstimateCostAndDistance.builder()
+                .cost(estimateCost)
+                .distance(distance)
+                .build();
+
+        return responseEstimateCostAndDistance;
+    }
+
     private FirebaseToken decodeToken(String idToken) {
 
         FirebaseToken decodedToken;
@@ -220,5 +245,18 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return decodedToken;
+    }
+
+    private Double getEstimateCost(Double distance) {
+
+        double baseCostPerKm = 4300.0;
+
+        double cost = 12500.0;
+
+        if (distance > 2.0) {
+            cost += baseCostPerKm * (distance - 2.0);
+        }
+
+        return cost;
     }
 }

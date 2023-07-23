@@ -1,6 +1,8 @@
 package cabo.backend.customer.service;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -9,4 +11,8 @@ public interface BingMapServiceClient {
 
     @GetMapping("/api/v1/bing-map/address")
     String getAddress(@RequestParam double latitude, @RequestParam double longitude);
+
+    @GetMapping("/api/v1/bing-map/get-distance")
+    Double calculateDistance(@RequestParam double latitude_1, @RequestParam double longitude_1,
+                             @RequestParam double latitude_2, @RequestParam double longitude_2);
 }

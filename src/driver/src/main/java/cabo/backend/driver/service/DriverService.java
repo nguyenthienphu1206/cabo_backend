@@ -19,4 +19,6 @@ public interface DriverService {
     ResponseCheckInOut checkOut(String bearerToken, RequestCheckOut requestCheckOut);
 
     ResponseOverview getOverview(String idToken, String driverId);
+
+    void subscribeNotification(String bearerToken, String fcmToken);
 }

@@ -106,4 +106,23 @@ public class DriverController {
 
         return new ResponseEntity<>(responseOverview, HttpStatus.OK);
     }
+
+    @GetMapping("/driver/notification/subscribe/{fcmToken}")
+    public ResponseEntity<ResponseSubscribeNotification> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
+                                                                               @PathVariable("fcmToken") String fcmToken) {
+
+        ResponseSubscribeNotification responseSubscribeNotification;
+
+        try {
+            driverService.subscribeNotification(bearerToken, fcmToken);
+
+            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.OK);
+        } catch (Exception ex) {
+            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), ex.getMessage());
+
+            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
