@@ -1,4 +1,4 @@
-package cabo.backend.vehicle.config;
+package cabo.backend.booking.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -13,10 +13,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SpringDocConfig implements WebMvcConfigurer {
 
     @Bean
-    public OpenAPI vehicleOpenAPI() {
+    public OpenAPI bookingOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Vehicle")
+                        .title("Booking")
                         .description("Spring Boot REST API Documentation")
                         .version("1")
                         .contact(new Contact()
@@ -28,11 +28,11 @@ public class SpringDocConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public GroupedOpenApi vehicleApi() {
+    public GroupedOpenApi bookingApi() {
         return GroupedOpenApi.builder()
-                .addOpenApiCustomiser(openApi -> openApi.info(vehicleOpenAPI().getInfo()))
-                .group("Vehicle")
-                .packagesToScan("cabo.backend.vehicle.controller")
+                .addOpenApiCustomiser(openApi -> openApi.info(bookingOpenAPI().getInfo()))
+                .group("Booking")
+                .packagesToScan("cabo.backend.booking.controller")
                 .build();
     }
 }
