@@ -11,7 +11,6 @@
         <module name="trip" />
         <module name="driver" />
         <module name="bing-map" />
-        <module name="gps" />
         <module name="customer" />
         <module name="vehicle" />
       </profile>

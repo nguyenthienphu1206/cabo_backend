@@ -1,12 +1,10 @@
 package cabo.backend.trip.service;
 
-import cabo.backend.trip.dto.ResponseAverageIncomePerDrive;
-import cabo.backend.trip.dto.ResponseRecentTripFromCustomer;
-import cabo.backend.trip.dto.ResponseRecentTripFromDriver;
-import cabo.backend.trip.dto.ResponseTotalTrip;
-import org.apache.coyote.Response;
+import cabo.backend.trip.dto.*;
 
 public interface TripService {
+
+    ResponseTripId createTrip(CreateTripDto createTripDto);
 
     ResponseRecentTripFromCustomer getRecentTripFromCustomer(String customerId);
 
@@ -15,4 +13,6 @@ public interface TripService {
     ResponseTotalTrip getTotalTrip(String collection, String id);
 
     ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId);
+
+    Boolean checkReceivedTrip(String tripId);
 }

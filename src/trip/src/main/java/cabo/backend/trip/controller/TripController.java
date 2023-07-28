@@ -1,9 +1,6 @@
 package cabo.backend.trip.controller;
 
-import cabo.backend.trip.dto.ResponseAverageIncomePerDrive;
-import cabo.backend.trip.dto.ResponseRecentTripFromCustomer;
-import cabo.backend.trip.dto.ResponseRecentTripFromDriver;
-import cabo.backend.trip.dto.ResponseTotalTrip;
+import cabo.backend.trip.dto.*;
 import cabo.backend.trip.service.TripService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +14,14 @@ public class TripController {
 
     public TripController(TripService tripService) {
         this.tripService = tripService;
+    }
+
+    @PostMapping("/trip/create-trip")
+    public ResponseEntity<ResponseTripId> createTrip(@RequestBody CreateTripDto createTripDto) {
+
+        ResponseTripId responseTripId = tripService.createTrip(createTripDto);
+
+        return new ResponseEntity<>(responseTripId, HttpStatus.CREATED);
     }
 
     @GetMapping("/trip/recent-trip/customer/{customerId}")
@@ -50,5 +55,14 @@ public class TripController {
         ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripService.getAverageIncomePerDrive(driverId);
 
         return new ResponseEntity<>(responseAverageIncomePerDrive, HttpStatus.OK);
+    }
+
+
+    @GetMapping("/trip/check-received-trip")
+    public ResponseEntity<Boolean> checkReceivedTrip(@RequestParam String tripId) {
+
+        Boolean result = tripService.checkReceivedTrip(tripId);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

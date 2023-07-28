@@ -1,11 +1,9 @@
 package cabo.backend.trip.service.impl;
 
-import cabo.backend.trip.dto.ResponseAverageIncomePerDrive;
-import cabo.backend.trip.dto.ResponseRecentTripFromCustomer;
-import cabo.backend.trip.dto.ResponseRecentTripFromDriver;
-import cabo.backend.trip.dto.ResponseTotalTrip;
+import cabo.backend.trip.dto.*;
 import cabo.backend.trip.entity.Trip;
 import cabo.backend.trip.service.TripService;
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -14,6 +12,7 @@ import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -42,6 +41,40 @@ public class TripServiceImpl implements TripService {
         this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
         this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
         this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
+    }
+
+    @Override
+    public ResponseTripId createTrip(CreateTripDto createTripDto) {
+
+        GeoPoint customerOrderLocation = new GeoPoint(createTripDto.getCustomerOrderLocation().getLatitude(),
+                createTripDto.getCustomerOrderLocation().getLongitude());
+
+        GeoPoint driverStartLocation = new GeoPoint(createTripDto.getDriverStartLocation().getLatitude(),
+                createTripDto.getDriverStartLocation().getLongitude());
+
+        GeoPoint toLocation = new GeoPoint(createTripDto.getToLocation().getLatitude(),
+                createTripDto.getToLocation().getLongitude());
+
+        Trip trip = Trip.builder()
+                .cost(createTripDto.getCost())
+                .customerId(createTripDto.getCustomerId())
+                .driverId(createTripDto.getDriverId())
+                .distance(createTripDto.getDistance())
+                .startTime(createTripDto.getStartTime())
+                .pickUpTime(createTripDto.getPickUpTime())
+                .endTime(createTripDto.getEndTime())
+                .customerOrderLocation(customerOrderLocation)
+                .driverStartLocation(driverStartLocation)
+                .toLocation(toLocation)
+                .paymentType(createTripDto.getPaymentType())
+                .build();
+
+        DocumentReference documentReference = collectionRefTrip.document();
+        documentReference.set(trip);
+
+        ResponseTripId responseTripId = new ResponseTripId(new Date(), documentReference.getId());
+
+        return responseTripId;
     }
 
     @Override
@@ -198,6 +231,36 @@ public class TripServiceImpl implements TripService {
 
         log.info("Successfully");
         return responseAverageIncomePerDrive;
+    }
+
+    @Override
+    public Boolean checkReceivedTrip(String tripId) {
+
+        Boolean isReceived = true;
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip.getDriverId() == null) {
+
+                    log.info("Driver id: " + trip.getDriverId());
+
+                    isReceived = false;
+                }
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return isReceived;
     }
 
     private FirebaseToken decodeToken(String idToken) {
