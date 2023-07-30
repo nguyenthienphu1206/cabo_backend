@@ -4,6 +4,8 @@ import cabo.backend.driver.dto.*;
 
 public interface DriverService {
 
+    DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId);
+
     String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo);
 
     String saveDriver(String idToken, DriverDto driverDto);
@@ -21,4 +23,6 @@ public interface DriverService {
     ResponseOverview getOverview(String idToken, String driverId);
 
     void subscribeNotification(String bearerToken, String fcmToken);
+
+    ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 }

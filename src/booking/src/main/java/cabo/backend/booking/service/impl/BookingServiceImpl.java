@@ -5,6 +5,7 @@ import cabo.backend.booking.entity.GPS;
 import cabo.backend.booking.entity.GeoPoint;
 import cabo.backend.booking.service.BingMapServiceClient;
 import cabo.backend.booking.service.BookingService;
+import cabo.backend.booking.service.DriverServiceClient;
 import cabo.backend.booking.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -28,6 +29,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Autowired
     private BingMapServiceClient bingMapServiceClient;
+
+    @Autowired
+    private DriverServiceClient driverServiceClient;
 
     @Autowired
     private TripServiceClient tripServiceClient;
@@ -136,44 +140,42 @@ public class BookingServiceImpl implements BookingService {
 
         String idToken = bearerToken.substring(7);
 
+        log.info("idToken");
+
         //FirebaseToken decodedToken = decodeToken(idToken);
 
         ResponseTripId responseTripId = createTrip(customerId, requestBooking);
 
+        log.info("ResponseTripId: " + responseTripId);
+
         String tripId = responseTripId.getTripId();
+
+        log.info("tripId: " + tripId);
 
         CompletableFuture<ResponseDriverInformation> future = CompletableFuture.supplyAsync(() -> {
             // Gửi thông báo
-            NotificationDto notificationDto = NotificationDto.builder()
-                    .title("Send GPS")
-                    .body("GPS")
-                    .build();
-
-            sendNotificationToSuitableDriver(getAllDeviceTokens(), notificationDto);
-
-            try {
-                Thread.sleep(5000); // Tạm dừng thực thi trong 5 giây
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+//            NotificationDto notificationDto = NotificationDto.builder()
+//                    .title("GPS")
+//                    .body("GPS")
+//                    .build();
+//
+//            sendNotificationToSuitableDriver(getAllDeviceTokens(), notificationDto);
+//
+//            try {
+//                Thread.sleep(5000); // Tạm dừng thực thi trong 5 giây
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
 
             // Tìm ra tài xế phù hợp
-            searchSuitableDriver(tripId, requestBooking.getCustomerOrderLocation());
+            String driverId = searchSuitableDriver(tripId, requestBooking.getCustomerOrderLocation());
+            ResponseDriverInformation responseDriverInformation = null;
+
+            if (driverId != null) {
+                responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
+            }
 
             // ---
-
-            DriverInfo driverInfo = DriverInfo.builder()
-                    .fullName("A")
-                    .phoneNumber("0")
-                    .avatar("A")
-                    .brand("A")
-                    .regNo("A")
-                    .build();
-
-            ResponseDriverInformation responseDriverInformation = ResponseDriverInformation.builder()
-                    .tripId("A")
-                    .driverInfo(driverInfo)
-                    .build();
 
             return responseDriverInformation;
         });
@@ -198,9 +200,25 @@ public class BookingServiceImpl implements BookingService {
         return decodedToken;
     }
 
+    private ResponseDriverInformation getDriverInformationFromDB(String bearerToken, String driverId, String tripId) {
+
+        DriverInfo driverInfo = driverServiceClient.getDriverInfoById(bearerToken, tripId, driverId);
+
+        ResponseDriverInformation responseDriverInformation = ResponseDriverInformation.builder()
+                .tripId(tripId)
+                .driverInfo(driverInfo)
+                .build();
+
+        return  responseDriverInformation;
+    }
+
     private ResponseTripId createTrip(String customerId, RequestBookADrive requestBooking) {
 
         DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        GeoPoint geoPoint =new GeoPoint(0.0, 0.0);
+
+        log.info("documentReference: " + documentReference);
 
         CreateTripDto createTripDto = CreateTripDto.builder()
                 .cost(requestBooking.getCost())
@@ -211,24 +229,28 @@ public class BookingServiceImpl implements BookingService {
                 .pickUpTime(0)
                 .endTime(0)
                 .customerOrderLocation(requestBooking.getCustomerOrderLocation())
-                .driverStartLocation(null)
+                .driverStartLocation(geoPoint)
                 .toLocation(requestBooking.getToLocation())
                 .paymentType(requestBooking.getPaymentType())
                 .build();
 
+        log.info("test: ");
+
         ResponseTripId responseTripId = tripServiceClient.createTrip(createTripDto);
+
+        log.info("responseTripId: " + responseTripId);
 
         return responseTripId;
     }
 
-    private void searchSuitableDriver(String tripId, GeoPoint customerOrderLocation) {
+    private String searchSuitableDriver(String tripId, GeoPoint customerOrderLocation) {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .title("BOOKING_OPEN")
                 .body("BOOKING_OPEN")
                 .build();
 
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
 
             List<String> suitableDriverUid;
             List<String> listOfFcmTokens;
@@ -241,22 +263,26 @@ public class BookingServiceImpl implements BookingService {
 
                 listOfFcmTokens = getListOfFcmToken(suitableDriverUid);
 
-                sendNotificationToSuitableDriver(listOfFcmTokens, notificationDto);
+                //sendNotificationToSuitableDriver(listOfFcmTokens, notificationDto);
 
                 long endTime = System.currentTimeMillis() + 5000;
 
                 while (System.currentTimeMillis() < endTime) {
 
-                    Boolean isReceived = tripServiceClient.checkReceivedTrip(tripId);
+                    String driverId = tripServiceClient.getDriverIdByTripId(tripId);
 
-                    if (isReceived) {
-                        break;
+                    if (driverId != null) {
+                        return driverId;
                     }
                 }
 
                 x += 2;
             }
+
+            return null;
         });
+
+        return future.join();
     }
 
     private void sendNotificationToSuitableDriver(List<String> listOfFcmTokens, NotificationDto notificationDto) {

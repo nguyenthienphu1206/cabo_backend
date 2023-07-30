@@ -4,6 +4,7 @@ import cabo.backend.driver.dto.*;
 import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
 import cabo.backend.driver.entity.FcmToken;
+import cabo.backend.driver.entity.GeoPoint;
 import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.exception.ResourceNotFoundException;
@@ -16,7 +17,6 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +69,57 @@ public class DriverServiceImpl implements DriverService {
         this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
         this.collectionAttendance = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
         this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
+    }
+
+    @Override
+    public DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        DriverInfo driverInfo = null;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Driver driver = document.toObject(Driver.class);
+
+                if (driver != null) {
+                    DocumentReference vehicleIdRef = driver.getVehicleId();
+
+                    String vehicleId = vehicleIdRef.getId();
+
+                    VehicleDto vehicleDto = vehicleServiceClient.getVehicle(vehicleId);
+
+                    GeoPoint driverLocation = tripServiceClient.getDriverLocation(tripId);
+
+                    driverInfo = DriverInfo.builder()
+                            .fullName(driver.getFullName())
+                            .phoneNumber(driver.getPhoneNumber())
+                            .avatar(driver.getAvatar())
+                            .brand(vehicleDto.getBrand())
+                            .regNo(vehicleDto.getRegNo())
+                            .driverCurrentLocation(driverLocation)
+                            .build();
+
+                }
+
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "DriverId", driverId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return driverInfo;
     }
 
     @Override
@@ -430,6 +481,26 @@ public class DriverServiceImpl implements DriverService {
                 .build();
 
         ApiFuture<WriteResult> collectionApiFuture = collectionRefFcmToken.document().set(savedFcmToken);
+    }
+
+    @Override
+    public ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefDrvier.document(requestReceivedDriverInfo.getDriverId());
+
+        RequestReceivedDriverRefInfo requestReceivedDriverRefInfo = RequestReceivedDriverRefInfo.builder()
+                .tripId(requestReceivedDriverInfo.getTripId())
+                .driverId(documentReference)
+                .currentLocation(requestReceivedDriverInfo.getCurrentLocation())
+                .build();
+
+        ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(requestReceivedDriverRefInfo);
+
+        return responseStatus;
     }
 
     private FirebaseToken decodeToken(String idToken) {

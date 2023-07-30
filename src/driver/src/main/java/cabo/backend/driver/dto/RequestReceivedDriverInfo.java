@@ -1,6 +1,6 @@
-package cabo.backend.booking.dto;
+package cabo.backend.driver.dto;
 
-import cabo.backend.booking.entity.GeoPoint;
+import cabo.backend.driver.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseReceivedDriverInfo {
+public class RequestReceivedDriverInfo {
 
     private String driverId;
 

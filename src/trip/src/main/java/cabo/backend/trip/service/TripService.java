@@ -1,8 +1,11 @@
 package cabo.backend.trip.service;
 
 import cabo.backend.trip.dto.*;
+import com.google.cloud.firestore.GeoPoint;
 
 public interface TripService {
+
+    GeoPoint getDriverLocation(String tripId);
 
     ResponseTripId createTrip(CreateTripDto createTripDto);
 
@@ -14,5 +17,7 @@ public interface TripService {
 
     ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId);
 
-    Boolean checkReceivedTrip(String tripId);
+    String getDriverIdByTripId(String tripId);
+
+    ResponseStatus sendReceivedDriverInfo(RequestReceivedDriverInfo requestReceivedDriverInfo);
 }

@@ -2,12 +2,10 @@ package cabo.backend.vehicle.service.impl;
 
 import cabo.backend.vehicle.dto.VehicleDto;
 import cabo.backend.vehicle.entity.Vehicle;
+import cabo.backend.vehicle.exception.ResourceNotFoundException;
 import cabo.backend.vehicle.service.VehicleService;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
+import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -15,6 +13,8 @@ import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -33,6 +33,41 @@ public class VehicleServiceImpl implements VehicleService {
         this.dbFirestore = dbFirestore;
 
         this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
+    }
+
+    @Override
+    public VehicleDto getVehicle(String vehicleId) {
+
+        DocumentReference documentReference = collectionRefVehicle.document(vehicleId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        VehicleDto vehicleDto = null;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Vehicle vehicle = document.toObject(Vehicle.class);
+
+                if (vehicle != null) {
+                    vehicleDto = VehicleDto.builder()
+                            .slot(vehicle.getSlot())
+                            .type(vehicle.getType())
+                            .regNo(vehicle.getRegNo())
+                            .brand(vehicle.getBrand())
+                            .build();
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "VehicleId", vehicleId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vehicleDto;
     }
 
     @Override

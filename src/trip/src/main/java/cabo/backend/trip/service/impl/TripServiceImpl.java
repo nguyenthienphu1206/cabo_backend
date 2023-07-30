@@ -2,6 +2,7 @@ package cabo.backend.trip.service.impl;
 
 import cabo.backend.trip.dto.*;
 import cabo.backend.trip.entity.Trip;
+import cabo.backend.trip.exception.ResourceNotFoundException;
 import cabo.backend.trip.service.TripService;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -41,6 +42,36 @@ public class TripServiceImpl implements TripService {
         this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
         this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
         this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
+    }
+
+    @Override
+    public GeoPoint getDriverLocation(String tripId) {
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        GeoPoint driverLocation = null;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+                    driverLocation = trip.getDriverStartLocation();
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "TripId", tripId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return driverLocation;
     }
 
     @Override
@@ -234,9 +265,9 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public Boolean checkReceivedTrip(String tripId) {
+    public String getDriverIdByTripId(String tripId) {
 
-        Boolean isReceived = true;
+        String driverId  = null;
 
         DocumentReference documentReference = collectionRefTrip.document(tripId);
 
@@ -248,11 +279,15 @@ public class TripServiceImpl implements TripService {
             if (document.exists()) {
                 Trip trip = document.toObject(Trip.class);
 
-                if (trip.getDriverId() == null) {
+                if (trip != null) {
 
-                    log.info("Driver id: " + trip.getDriverId());
+                    DocumentReference driverIdRef = trip.getDriverId();
 
-                    isReceived = false;
+                    if (driverIdRef != null) {
+                        driverId = driverIdRef.getId();
+
+                        return driverId;
+                    }
                 }
             }
 
@@ -260,7 +295,46 @@ public class TripServiceImpl implements TripService {
             throw new RuntimeException(e);
         }
 
-        return isReceived;
+        return null;
+    }
+
+    @Override
+    public ResponseStatus sendReceivedDriverInfo(RequestReceivedDriverInfo requestReceivedDriverInfo) {
+
+//        String idToken = bearerToken.substring(7);
+//
+//        FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(requestReceivedDriverInfo.getTripId());
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null && trip.getDriverId() == null) {
+
+                    GeoPoint driverStartLocation = new GeoPoint(requestReceivedDriverInfo.getCurrentLocation().getLatitude(),
+                            requestReceivedDriverInfo.getCurrentLocation().getLongitude());
+                    trip.setDriverId(requestReceivedDriverInfo.getDriverId());
+                    trip.setDriverStartLocation(driverStartLocation);
+
+                    documentReference.set(trip);
+
+                    ResponseStatus responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+                    return responseStatus;
+                }
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ResponseStatus(new Date(), "Failed");
     }
 
     private FirebaseToken decodeToken(String idToken) {

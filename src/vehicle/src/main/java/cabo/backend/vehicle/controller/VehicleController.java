@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/vehicle")
 public class VehicleController {
 
     private VehicleService vehicleService;
@@ -16,7 +16,15 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
-    @PostMapping("/vehicle/register")
+    @GetMapping("/{vehicleId}")
+    public ResponseEntity<VehicleDto> getVehicle(@PathVariable("vehicleId") String vehicleId) {
+
+        VehicleDto vehicleDto = vehicleService.getVehicle(vehicleId);
+
+        return new ResponseEntity<>(vehicleDto, HttpStatus.OK);
+    }
+
+    @PostMapping("/register")
     public ResponseEntity<String> registerVehicle(@RequestBody VehicleDto vehicleDto) {
 
         String vehicleId = vehicleService.registerVehicle(vehicleDto);
