@@ -1,6 +1,6 @@
-package cabo.backend.booking.entity;
+package cabo.backend.driver.dto;
 
-import com.google.cloud.firestore.GeoPoint;
+import cabo.backend.driver.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class GPS {
+public class RequestGPS {
 
     private String uid;
 

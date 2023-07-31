@@ -7,7 +7,11 @@ import cabo.backend.booking.dto.ResponseDriverInformation;
 
 public interface BookingService {
 
-    void sendNotificationToAllDevices(NotificationDto notificationDto);
+    void sendNotification(NotificationDto notificationDto);
+
+    void sendNotificationToDesignatedDriver(String bearerToken, String uid, NotificationDto notificationDto);
+
+    void removeAllGPS(String bearerToken);
 
     void collectGPSFromDriver(String bearerToken, RequestGPS requestGPS);
 

@@ -73,9 +73,10 @@ public class TripController {
 
 
     @GetMapping("/trip/{tripId}/get-driverId")
-    public ResponseEntity<String> getDriverIdByTripId(@PathVariable("tripId") String tripId) {
+    public ResponseEntity<String> getDriverIdByTripId(@RequestHeader("Authorization") String bearerToken,
+                                                      @PathVariable("tripId") String tripId) {
 
-        String driverId = tripService.getDriverIdByTripId(tripId);
+        String driverId = tripService.getDriverIdByTripId(bearerToken, tripId);
 
         return new ResponseEntity<>(driverId, HttpStatus.OK);
     }

@@ -22,9 +22,31 @@ public class BookingController {
     @PostMapping("/send-notification")
     public ResponseEntity<String> sendNotificationToAllDevices(@RequestBody NotificationDto notificationDto) {
 
-        bookingService.sendNotificationToAllDevices(notificationDto);
+        bookingService.sendNotification(notificationDto);
 
         return new ResponseEntity<>("Successfully", HttpStatus.OK);
+    }
+
+    @PostMapping("/send-notification-designate-driver")
+    public ResponseEntity<ResponseStatus> sendNotificationToDesignatedDriver(@RequestHeader("Authorization") String bearerToken,
+                                                               @PathVariable("uid") String uid,
+                                                               @RequestBody NotificationDto notificationDto) {
+
+        ResponseStatus responseStatus;
+
+        try {
+            bookingService.sendNotificationToDesignatedDriver(bearerToken, uid, notificationDto);
+
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+
+            responseStatus = new ResponseStatus(new Date(), e.getMessage());
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/drive-booking/current-gps")
@@ -56,5 +78,25 @@ public class BookingController {
         ResponseDriverInformation responseDriverInformation = bookingService.getDriverInformation(bearerToken, customerId, requestBooking);
 
         return new ResponseEntity<>(responseDriverInformation, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/remove-all-gps")
+    public ResponseEntity<ResponseStatus> removeAllGPS(@RequestHeader("Authorization") String bearerToken) {
+
+        ResponseStatus responseStatus;
+
+        try {
+            bookingService.removeAllGPS(bearerToken);
+
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+
+            responseStatus = new ResponseStatus(new Date(), e.getMessage());
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

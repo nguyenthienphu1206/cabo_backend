@@ -17,5 +17,6 @@ public interface TripServiceClient {
     ResponseTripId createTrip(@RequestBody CreateTripDto createTripDto);
 
     @GetMapping("/api/v1/trip/{tripId}/get-driverId")
-    String getDriverIdByTripId(@PathVariable("tripId") String tripId);
+    String getDriverIdByTripId(@RequestHeader("Authorization") String bearerToken,
+                               @PathVariable("tripId") String tripId);
 }

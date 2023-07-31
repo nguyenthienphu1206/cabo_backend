@@ -265,7 +265,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public String getDriverIdByTripId(String tripId) {
+    public String getDriverIdByTripId(String bearerToken, String tripId) {
 
         String driverId  = null;
 

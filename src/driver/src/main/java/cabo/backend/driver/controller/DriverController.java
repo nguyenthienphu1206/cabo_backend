@@ -145,4 +145,13 @@ public class DriverController {
 
         return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
     }
+
+    @PostMapping("/drive-booking/current-gps")
+    public ResponseEntity<ResponseStatus> sendGPS(@RequestHeader("Authorization") String bearerToken,
+                                                  @RequestBody RequestGPS requestGPS) {
+
+        ResponseStatus responseStatus = driverService.sendGPS(bearerToken, requestGPS);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+    }
 }

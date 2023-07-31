@@ -25,4 +25,6 @@ public interface DriverService {
     void subscribeNotification(String bearerToken, String fcmToken);
 
     ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+
+    ResponseStatus sendGPS(String bearerToken, RequestGPS requestGPS);
 }

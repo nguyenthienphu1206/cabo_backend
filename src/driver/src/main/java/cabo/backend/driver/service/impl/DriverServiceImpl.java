@@ -8,10 +8,7 @@ import cabo.backend.driver.entity.GeoPoint;
 import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.exception.ResourceNotFoundException;
-import cabo.backend.driver.service.BingMapServiceClient;
-import cabo.backend.driver.service.DriverService;
-import cabo.backend.driver.service.TripServiceClient;
-import cabo.backend.driver.service.VehicleServiceClient;
+import cabo.backend.driver.service.*;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
@@ -40,6 +37,9 @@ public class DriverServiceImpl implements DriverService {
 
     @Autowired
     private BingMapServiceClient bingMapServiceClient;
+
+    @Autowired
+    private BookingServiceClient bookingServiceClient;
 
     private ModelMapper modelMapper;
 
@@ -500,6 +500,20 @@ public class DriverServiceImpl implements DriverService {
 
         ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(requestReceivedDriverRefInfo);
 
+        sendNotification(bearerToken, requestReceivedDriverInfo.getDriverId(), responseStatus.getMessage());
+
+        return responseStatus;
+    }
+
+    @Override
+    public ResponseStatus sendGPS(String bearerToken, RequestGPS requestGPS) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        ResponseStatus responseStatus = bookingServiceClient.collectGPS(bearerToken, requestGPS);
+
         return responseStatus;
     }
 
@@ -514,5 +528,43 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return decodedToken;
+    }
+
+    private void sendNotification(String bearerToken, String driverId, String message) {
+
+        if (message.equals("Successfully")) {
+
+            DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+            ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+            try {
+                DocumentSnapshot document = future.get();
+
+                if (document.exists()) {
+
+                    Driver driver = document.toObject(Driver.class);
+
+                    if (driver != null) {
+                        String uid = driver.getUid();
+
+                        NotificationDto notificationDto = NotificationDto.builder()
+                                .title("BOOKING_CLOSE")
+                                .body("BOOKING_CLOSE")
+                                .build();
+
+                        ResponseStatus rsNotify = bookingServiceClient.sendNotificationToDesignatedDriver(bearerToken, uid, notificationDto);
+
+                        ResponseStatus rsRemoveAllGPS = bookingServiceClient.removeAllGPS(bearerToken);
+                    }
+                }
+                else {
+                    throw new ResourceNotFoundException("Document", "DriverId", driverId);
+                }
+
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

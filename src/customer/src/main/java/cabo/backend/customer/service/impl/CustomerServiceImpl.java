@@ -110,9 +110,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
-
-        Firestore dbFirestore = FirestoreClient.getFirestore();
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         DocumentReference documentReference = collectionRefCustomer.document(customerId);
 

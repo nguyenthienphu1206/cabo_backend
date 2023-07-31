@@ -17,7 +17,7 @@ public interface TripService {
 
     ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId);
 
-    String getDriverIdByTripId(String tripId);
+    String getDriverIdByTripId(String bearerToken, String tripId);
 
     ResponseStatus sendReceivedDriverInfo(RequestReceivedDriverInfo requestReceivedDriverInfo);
 }
