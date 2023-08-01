@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/vehicle/pom.xml" />
         <option value="$PROJECT_DIR$/trip/pom.xml" />
         <option value="$PROJECT_DIR$/bing-map/pom.xml" />
+        <option value="$PROJECT_DIR$/booking/pom.xml" />
       </list>
     </option>
   </component>

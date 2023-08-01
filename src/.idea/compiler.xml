@@ -7,20 +7,23 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="booking" />
         <module name="trip" />
         <module name="driver" />
+        <module name="bing-map" />
         <module name="customer" />
         <module name="vehicle" />
-        <module name="bing-map" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="bing-map" target="11" />
+      <module name="booking" target="11" />
       <module name="config-server" target="11" />
       <module name="customer" target="11" />
       <module name="driver" target="11" />
       <module name="firebase" target="11" />
       <module name="google-maps" target="11" />
+      <module name="gps" target="11" />
       <module name="infobip" target="17" />
       <module name="messagebird" target="17" />
       <module name="speedSMS" target="17" />
@@ -33,11 +36,13 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="bing-map" options="-parameters" />
+      <module name="booking" options="-parameters" />
       <module name="config-server" options="-parameters" />
       <module name="customer" options="-parameters" />
       <module name="driver" options="-parameters" />
       <module name="firebase" options="-parameters" />
       <module name="google-maps" options="-parameters" />
+      <module name="gps" options="-parameters" />
       <module name="infobip" options="-parameters" />
       <module name="messagebird" options="-parameters" />
       <module name="speedSMS" options="-parameters" />

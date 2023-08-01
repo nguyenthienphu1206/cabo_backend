@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/customer")
 @Slf4j
 public class CustomerController {
 
@@ -22,7 +22,7 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @PostMapping("/customer/auth/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<ResponseCustomerId> getCustomerId(@RequestHeader("Authorization") String bearerToken,
                                                             @RequestBody RequestRegisterCustomer requestRegisterCustomer) throws ExecutionException, InterruptedException {
 
@@ -33,7 +33,7 @@ public class CustomerController {
         return new ResponseEntity<>(responseCustomerId, HttpStatus.OK);
     }
 
-    @PostMapping("/customer")
+    @PostMapping("")
     public ResponseEntity<String> saveCustomer(@RequestHeader("Authorization") String bearerToken,
                                                @RequestBody CustomerDto customerDto) throws ExecutionException, InterruptedException {
 
@@ -42,7 +42,16 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping("/customer/{id}")
+    @GetMapping("/document/{customerId}")
+    public  ResponseEntity<DocumentRef> getDocumentById(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("customerId") String customerId) {
+
+        DocumentRef documentRef = customerService.getDocumentById(bearerToken, customerId);
+
+        return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
     public ResponseEntity<CustomerDto> getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                                           @PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
 
@@ -53,7 +62,7 @@ public class CustomerController {
         return new ResponseEntity<>(customerDto, HttpStatus.OK);
     }
 
-    @PostMapping("/customer/check-phone-existence")
+    @PostMapping("/check-phone-existence")
     public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestHeader("Authorization") String bearerToken,
                                                                            @RequestBody RequestPhoneNumberDto requestPhoneNumberDto,
                                                                            HttpServletRequest request) {
@@ -74,12 +83,31 @@ public class CustomerController {
         return new ResponseEntity<>(responseCheckPhoneExistence, HttpStatus.OK);
     }
 
-    @GetMapping("/customer/{id}/overview")
+    @GetMapping("/{id}/overview")
     public ResponseEntity<ResponseOverview> getOverview(@RequestHeader("Authorization") String bearerToken,
                                                         @PathVariable("id") String customerId) {
 
         ResponseOverview responseOverview = customerService.getOverview(bearerToken, customerId);
 
         return new ResponseEntity<>(responseOverview, HttpStatus.OK);
+    }
+
+    @PostMapping("/drive-booking/estimate-cost")
+    public ResponseEntity<ResponseEstimateCostAndDistance> getEstimateCostAndDistance(@RequestHeader("Authorization") String bearerToken,
+                                                                                       @RequestBody RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
+
+        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = customerService.getEstimateCostAndDistance(bearerToken, requestOriginsAndDestinationsLocation);
+
+        return new ResponseEntity<>(responseEstimateCostAndDistance, HttpStatus.OK);
+    }
+
+    @PostMapping("/drive-booking/confirm/{customerId}")
+    public ResponseEntity<ResponseDriverInformation> bookADrive(@RequestHeader("Authorization") String bearerToken,
+                                                                @PathVariable("customerId") String customerId,
+                                                                @RequestBody RequestBookADrive requestBookADrive) {
+
+        ResponseDriverInformation responseDriverInformation = customerService.bookADrive(bearerToken, customerId, requestBookADrive);
+
+        return new ResponseEntity<>(responseDriverInformation, HttpStatus.OK);
     }
 }

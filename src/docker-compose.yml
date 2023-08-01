@@ -8,8 +8,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - TRIP_SERVICE_URL=http://trip:8083/
+      - BING_MAP_SERVICE_URL=http://bing-map:8084/
+      - BOOKING_SERVICE_URL=http://booking:8085/
     networks:
-      - spring
+      - my_network
     restart: no
 
   driver:
@@ -19,10 +23,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
+    environment:
+      - VEHICLE_SERVICE_URL=http://vehicle:8082/
+      - TRIP_SERVICE_URL=http://trip:8083/
+      - BING_MAP_SERVICE_URL=http://bing-map:8084/
+      - BOOKING_SERVICE_URL=http://booking:8085/
     depends_on:
       - vehicle
     networks:
-      - spring
+      - my_network
     restart: no
 
   vehicle:
@@ -33,7 +42,7 @@ services:
     ports:
       - "8082:8082"
     networks:
-      - spring
+      - my_network
     restart: no
 
   trip:
@@ -44,7 +53,7 @@ services:
     ports:
       - "8083:8083"
     networks:
-      - spring
+      - my_network
     restart: no
 
   bing-map:
@@ -54,10 +63,27 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8084:8084"
+    environment:
+      - bing.map.apiKey=Aj6QhUcXi3KwZdDylmum4xiiypL9l2s2kqsnhP087cfTuvR2mKY7wuTBDgTfcaKq
     networks:
-      - spring
+      - my_network
+    restart: no
+
+  booking:
+    container_name: booking
+    build:
+      context: ./booking
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - CUSTOMER_SERVICE_URL=http://customer:8080/
+      - DRIVER_SERVICE_URL=http://driver:8081/
+      - TRIP_SERVICE_URL=http://trip:8083/
+      - BING_MAP_SERVICE_URL=http://bing-map:8084/
+    networks:
+      - my_network
     restart: no
 
 networks:
-  spring:
-    driver: bridge
+  my_network:

@@ -1,6 +1,7 @@
 package cabo.backend.driver.controller;
 
 import cabo.backend.driver.dto.*;
+import cabo.backend.driver.dto.ResponseStatus;
 import cabo.backend.driver.service.DriverService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,7 @@ import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/driver")
 @Slf4j
 public class DriverController {
 
@@ -22,7 +23,17 @@ public class DriverController {
         this.driverService = driverService;
     }
 
-    @PostMapping("/driver/auth/register")
+    @GetMapping("/get-driver-info")
+    public ResponseEntity<DriverInfo> getDriverInfoById(@RequestHeader("Authorization") String bearerToken,
+                                                        @RequestParam String tripId,
+                                                        @RequestParam String driverId) {
+
+        DriverInfo driverInfo = driverService.getDriverInfoByDriverIdAndTripId(bearerToken, driverId, tripId);
+
+        return new ResponseEntity<>(driverInfo, HttpStatus.OK);
+    }
+
+    @PostMapping("/auth/register")
     public ResponseEntity<ResponseDriverId> registerDriverInfo(@RequestHeader("Authorization") String bearerToken,
                                                                @Valid @RequestBody RequestRegistryInfo requestRegistryInfo) throws ExecutionException, InterruptedException {
 
@@ -33,7 +44,7 @@ public class DriverController {
         return new ResponseEntity<>(responseCustomerId, HttpStatus.CREATED);
     }
 
-    @PostMapping("/driver")
+    @PostMapping("")
     public ResponseEntity<String> saveDriver(@RequestHeader("Authorization") String bearerToken,
                                              @RequestBody DriverDto driverDto) throws ExecutionException, InterruptedException {
 
@@ -42,7 +53,16 @@ public class DriverController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping("/driver/{id}")
+    @GetMapping("/document/{driverId}")
+    public  ResponseEntity<DocumentRef> getDocumentById(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("driverId") String driverId) {
+
+        DocumentRef documentRef = driverService.getDocumentById(bearerToken, driverId);
+
+        return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
     public ResponseEntity<ResponseDriverDetails> getDriverDetails(@RequestHeader("Authorization") String bearerToken,
                                                                   @PathVariable("id") String driverId) throws ExecutionException, InterruptedException {
 
@@ -53,7 +73,7 @@ public class DriverController {
         return new ResponseEntity<>(responseDriverDetails, HttpStatus.OK);
     }
 
-    @PostMapping("/driver/auth/phone-verify")
+    @PostMapping("/auth/phone-verify")
     public ResponseEntity<ResponseCheckPhoneExistence> checkPhoneExistence(@RequestHeader("Authorization") String bearerToken,
                                                                            @RequestBody RequestPhoneNumberDto requestPhoneNumberDto) {
 
@@ -65,7 +85,7 @@ public class DriverController {
         return new ResponseEntity<>(responseCheckPhoneExistence, HttpStatus.OK);
     }
 
-    @PostMapping("/driver/{id}/vehicle/register")
+    @PostMapping("/{id}/vehicle/register")
     public ResponseEntity<ResponseVehicleId> registerDriverVehicle(@RequestHeader("Authorization") String bearerToken,
                                                                    @PathVariable("id") String driverId,
                                                                    @Valid @RequestBody RequestRegisterVehicle requestRegisterVehicle) {
@@ -77,7 +97,7 @@ public class DriverController {
         return new ResponseEntity<>(responseVehicleId, HttpStatus.CREATED);
     }
 
-    @PostMapping("/driver/check-in")
+    @PostMapping("/check-in")
     public ResponseEntity<ResponseCheckInOut> checkIn(@RequestHeader("Authorization") String bearerToken,
                                                       @Valid @RequestBody RequestCheckIn requestCheckIn) {
 
@@ -86,7 +106,7 @@ public class DriverController {
         return new ResponseEntity<>(responseCheckIn, HttpStatus.CREATED);
     }
 
-    @PostMapping("/driver/check-out")
+    @PostMapping("/check-out")
     public ResponseEntity<ResponseCheckInOut> checkOut(@RequestHeader("Authorization") String bearerToken,
                                                       @Valid @RequestBody RequestCheckOut requestCheckOut) {
 
@@ -98,12 +118,49 @@ public class DriverController {
 
     }
 
-    @GetMapping("/driver/{id}/overview")
+    @GetMapping("/{id}/overview")
     public ResponseEntity<ResponseOverview> getOverview(@RequestHeader("Authorization") String bearerToken,
                                                         @PathVariable("id") String driverId) {
 
         ResponseOverview responseOverview = driverService.getOverview(bearerToken, driverId);
 
         return new ResponseEntity<>(responseOverview, HttpStatus.OK);
+    }
+
+    @GetMapping("/notification/subscribe/{fcmToken}")
+    public ResponseEntity<ResponseSubscribeNotification> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
+                                                                               @PathVariable("fcmToken") String fcmToken) {
+
+        ResponseSubscribeNotification responseSubscribeNotification;
+
+        try {
+            driverService.subscribeNotification(bearerToken, fcmToken);
+
+            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.OK);
+        } catch (Exception ex) {
+            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), ex.getMessage());
+
+            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/drive-booking/accept-drive")
+    public ResponseEntity<ResponseStatus> sendReceivedDriverInfo(@RequestHeader("Authorization") String bearerToken,
+                                                                 @RequestBody RequestReceivedDriverInfo requestReceivedDriverInfo) {
+
+        ResponseStatus responseStatus = driverService.sendReceivedDriverInfo(bearerToken, requestReceivedDriverInfo);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/drive-booking/current-gps")
+    public ResponseEntity<ResponseStatus> sendGPS(@RequestHeader("Authorization") String bearerToken,
+                                                  @RequestBody RequestGPS requestGPS) {
+
+        ResponseStatus responseStatus = driverService.sendGPS(bearerToken, requestGPS);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 }

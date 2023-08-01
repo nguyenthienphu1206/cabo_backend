@@ -2,7 +2,9 @@ package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.exception.ResourceNotFoundException;
 import cabo.backend.customer.service.BingMapServiceClient;
+import cabo.backend.customer.service.BookingServiceClient;
 import cabo.backend.customer.service.CustomerService;
 import cabo.backend.customer.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
@@ -10,7 +12,6 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,41 @@ import java.util.concurrent.ExecutionException;
 @Service
 @Slf4j
 public class CustomerServiceImpl implements CustomerService {
-    private static final String COLLECTION_NAME = "customers";
 
     @Autowired
     private TripServiceClient tripServiceClient;
 
     @Autowired
     private BingMapServiceClient bingMapServiceClient;
+
+    @Autowired
+    private BookingServiceClient bookingServiceClient;
+
+    private static final String COLLECTION_NAME_CUSTOMER = "customers";
+
+    private final CollectionReference collectionRefCustomer;
+
+    private Firestore dbFirestore;
+
+    public CustomerServiceImpl(Firestore dbFirestore) {
+
+        this.dbFirestore = dbFirestore;
+
+        this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
+    }
+
+
+    @Override
+    public DocumentRef getDocumentById(String bearerToken, String customerId) {
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        DocumentRef documentRef = DocumentRef.builder()
+                .documentReference(documentReference)
+                .build();
+
+        return documentRef;
+    }
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -39,11 +68,7 @@ public class CustomerServiceImpl implements CustomerService {
         String uid = decodedToken.getUid();
         log.info("UID -----> " + uid);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionRef = dbFirestore.collection(COLLECTION_NAME);
-
-        Query query = collectionRef.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
+        Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
         String customerId;
@@ -61,7 +86,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .vip(false)
                         .build();
 
-                DocumentReference documentReference = collectionRef.document();
+                DocumentReference documentReference = collectionRefCustomer.document();
 
                 ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
 
@@ -84,9 +109,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection(COLLECTION_NAME).document().set(customerDto);
+        ApiFuture<WriteResult> collectionApiFuture = collectionRefCustomer.document().set(customerDto);
 
         String timestamp = null;
         try {
@@ -103,11 +126,9 @@ public class CustomerServiceImpl implements CustomerService {
 
         String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(customerId);
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
@@ -134,12 +155,8 @@ public class CustomerServiceImpl implements CustomerService {
 
         FirebaseToken decodedToken = decodeToken(idToken);
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-
-        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
-
         // Lấy tất cả các tài liệu trong collection
-        ApiFuture<QuerySnapshot> future = collectionReference.get();
+        ApiFuture<QuerySnapshot> future = collectionRefCustomer.get();
 
         List<QueryDocumentSnapshot> documents = null;
 
@@ -169,7 +186,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
         //log.info("Test");
-        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
+        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(bearerToken, customerId);
 
         ResponseRecentTrip responseRecentTrip = null;
 
@@ -194,7 +211,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 
         //log.info("Test1 " + tripDto);
-        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);
+        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "customer", customerId);
 
         //log.info("Test2 " + responseTotalTrip);
         ResponseOverview responseOverview = ResponseOverview.builder()
@@ -204,6 +221,43 @@ public class CustomerServiceImpl implements CustomerService {
         //log.info("Test3");
 
         return responseOverview;
+    }
+
+    @Override
+    public ResponseEstimateCostAndDistance getEstimateCostAndDistance(String bearerToken,
+                                                                      RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        double fromLat = requestOriginsAndDestinationsLocation.getFromLocation().getLatitude();
+        double fromLon = requestOriginsAndDestinationsLocation.getFromLocation().getLongitude();
+        double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
+        double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
+
+        Double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon);
+
+        Double estimateCost = getEstimateCost(distance);
+
+        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = ResponseEstimateCostAndDistance.builder()
+                .cost(estimateCost)
+                .distance(distance)
+                .build();
+
+        return responseEstimateCostAndDistance;
+    }
+
+    @Override
+    public ResponseDriverInformation bookADrive(String bearerToken, String customerId, RequestBookADrive requestBookADrive) {
+
+        ResponseDriverInformation responseDriverInformation = bookingServiceClient.getDriverInformation(bearerToken, customerId, requestBookADrive);
+
+        if (responseDriverInformation.getTripId() == null) {
+            throw new ResourceNotFoundException("Not Found The Driver");
+        }
+
+        return responseDriverInformation;
     }
 
     private FirebaseToken decodeToken(String idToken) {
@@ -217,5 +271,18 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return decodedToken;
+    }
+
+    private Double getEstimateCost(Double distance) {
+
+        double baseCostPerKm = 4300.0;
+
+        double cost = 12500.0;
+
+        if (distance > 2.0) {
+            cost += baseCostPerKm * (distance - 2.0);
+        }
+
+        return cost;
     }
 }

@@ -1,18 +1,25 @@
 package cabo.backend.trip.service;
 
-import cabo.backend.trip.dto.ResponseAverageIncomePerDrive;
-import cabo.backend.trip.dto.ResponseRecentTripFromCustomer;
-import cabo.backend.trip.dto.ResponseRecentTripFromDriver;
-import cabo.backend.trip.dto.ResponseTotalTrip;
-import org.apache.coyote.Response;
+import cabo.backend.trip.dto.*;
+import com.google.cloud.firestore.GeoPoint;
 
 public interface TripService {
 
-    ResponseRecentTripFromCustomer getRecentTripFromCustomer(String customerId);
+    GeoPoint getDriverLocation(String bearerToken, String tripId);
 
-    ResponseRecentTripFromDriver getRecentTripFromDriver(String driverId);
+    ResponseTripId createTrip(String bearerToken, CreateTripDto createTripDto);
 
-    ResponseTotalTrip getTotalTrip(String collection, String id);
+    ResponseRecentTripFromCustomer getRecentTripFromCustomer(String bearerToken, String customerId);
 
-    ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId);
+    ResponseRecentTripFromDriver getRecentTripFromDriver(String bearerToken, String driverId);
+
+    ResponseTotalTrip getTotalTrip(String bearerToken, String userType, String id);
+
+    ResponseAverageIncomePerDrive getAverageIncomePerDrive(String bearerToken, String driverId);
+
+    String getDriverIdByTripId(String bearerToken, String tripId);
+
+    ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+
+    void deleteTrip(String bearerToken, String tripId);
 }
