@@ -1,5 +1,6 @@
 package cabo.backend.vehicle.controller;
 
+import cabo.backend.vehicle.dto.DocumentRef;
 import cabo.backend.vehicle.dto.VehicleDto;
 import cabo.backend.vehicle.service.VehicleService;
 import org.springframework.http.HttpStatus;
@@ -16,18 +17,29 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
-    @GetMapping("/{vehicleId}")
-    public ResponseEntity<VehicleDto> getVehicle(@PathVariable("vehicleId") String vehicleId) {
+    @GetMapping("/document/{vehicleId}")
+    public  ResponseEntity<DocumentRef> getDocumentById(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("vehicleId") String vehicleId) {
 
-        VehicleDto vehicleDto = vehicleService.getVehicle(vehicleId);
+        DocumentRef documentRef = vehicleService.getDocumentById(bearerToken, vehicleId);
+
+        return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
+    @GetMapping("/{vehicleId}")
+    public ResponseEntity<VehicleDto> getVehicle(@RequestHeader("Authorization") String bearerToken,
+                                                 @PathVariable("vehicleId") String vehicleId) {
+
+        VehicleDto vehicleDto = vehicleService.getVehicle(bearerToken, vehicleId);
 
         return new ResponseEntity<>(vehicleDto, HttpStatus.OK);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerVehicle(@RequestBody VehicleDto vehicleDto) {
+    public ResponseEntity<String> registerVehicle(@RequestHeader("Authorization") String bearerToken,
+                                                  @RequestBody VehicleDto vehicleDto) {
 
-        String vehicleId = vehicleService.registerVehicle(vehicleDto);
+        String vehicleId = vehicleService.registerVehicle(bearerToken, vehicleDto);
 
         return new ResponseEntity<>(vehicleId, HttpStatus.CREATED);
     }

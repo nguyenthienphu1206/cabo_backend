@@ -3,6 +3,8 @@ package cabo.backend.trip.service.impl;
 import cabo.backend.trip.dto.*;
 import cabo.backend.trip.entity.Trip;
 import cabo.backend.trip.exception.ResourceNotFoundException;
+import cabo.backend.trip.service.CustomerServiceClient;
+import cabo.backend.trip.service.DriverServiceClient;
 import cabo.backend.trip.service.TripService;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -11,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -21,13 +24,11 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class TripServiceImpl implements TripService {
 
-    private static final String COLLECTION_NAM_DRIVER = "drivers";
+    @Autowired
+    private CustomerServiceClient customerServiceClient;
 
-    private final CollectionReference collectionRefDrvier;
-
-    private static final String COLLECTION_NAME_CUSTOMER = "customers";
-
-    private final CollectionReference collectionRefCustomer;
+    @Autowired
+    private DriverServiceClient driverServiceClient;
 
     private static final String COLLECTION_NAME_TRIP = "trips";
 
@@ -39,13 +40,15 @@ public class TripServiceImpl implements TripService {
 
         this.dbFirestore = dbFirestore;
 
-        this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
-        this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
         this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
     }
 
     @Override
-    public GeoPoint getDriverLocation(String tripId) {
+    public GeoPoint getDriverLocation(String bearerToken, String tripId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         DocumentReference documentReference = collectionRefTrip.document(tripId);
 
@@ -75,7 +78,11 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseTripId createTrip(CreateTripDto createTripDto) {
+    public ResponseTripId createTrip(String bearerToken, CreateTripDto createTripDto) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         GeoPoint customerOrderLocation = new GeoPoint(createTripDto.getCustomerOrderLocation().getLatitude(),
                 createTripDto.getCustomerOrderLocation().getLongitude());
@@ -109,13 +116,15 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseRecentTripFromCustomer getRecentTripFromCustomer(String customerId) {
+    public ResponseRecentTripFromCustomer getRecentTripFromCustomer(String bearerToken, String customerId) {
 
         //String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        DocumentReference customerRef = collectionRefCustomer.document(customerId);
+        DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
+
+        DocumentReference customerRef = documentRef.getDocumentReference();
 
         Query query = collectionRefTrip.whereEqualTo("customerId", customerRef)
                 .orderBy("startTime", Query.Direction.DESCENDING)
@@ -150,13 +159,15 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseRecentTripFromDriver getRecentTripFromDriver(String driverId) {
+    public ResponseRecentTripFromDriver getRecentTripFromDriver(String bearerToken, String driverId) {
 
         //String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        DocumentReference driverRef = collectionRefDrvier.document(driverId);
+        DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, driverId);
+
+        DocumentReference driverRef = documentRef.getDocumentReference();
 
         log.info("DriverRef: " + driverRef);
 
@@ -193,20 +204,21 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseTotalTrip getTotalTrip(String collection, String id) {
+    public ResponseTotalTrip getTotalTrip(String bearerToken, String userType, String id) {
 
         //String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        CollectionReference collectionReferenceUser = dbFirestore.collection(collection);
-
-        DocumentReference userRef = collectionReferenceUser.document(id);
-
+        DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, id);
         String field = "driverId";
-        if (collection.equals("customers")) {
+
+        if (userType.equals("customer")) {
+            documentRef = customerServiceClient.getDocumentById(bearerToken, id);
             field = "customerId";
         }
+
+        DocumentReference userRef = documentRef.getDocumentReference();
 
         Query query = collectionRefTrip.whereEqualTo(field, userRef);
 
@@ -225,15 +237,17 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId) {
+    public ResponseAverageIncomePerDrive getAverageIncomePerDrive(String bearerToken, String driverId) {
 
         //String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        DocumentReference userRef = collectionRefDrvier.document(driverId);
+        DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, driverId);
 
-        Query query = collectionRefTrip.whereEqualTo("driverId", userRef);
+        DocumentReference driverRef = documentRef.getDocumentReference();
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverRef);
 
         double totalIncome = 0.0;
         long count = 1;
@@ -267,6 +281,10 @@ public class TripServiceImpl implements TripService {
     @Override
     public String getDriverIdByTripId(String bearerToken, String tripId) {
 
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
         String driverId  = null;
 
         DocumentReference documentReference = collectionRefTrip.document(tripId);
@@ -299,7 +317,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseStatus sendReceivedDriverInfo(RequestReceivedDriverInfo requestReceivedDriverInfo) {
+    public ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo) {
 
 //        String idToken = bearerToken.substring(7);
 //
@@ -335,6 +353,20 @@ public class TripServiceImpl implements TripService {
         }
 
         return new ResponseStatus(new Date(), "Failed");
+    }
+
+    @Override
+    public void deleteTrip(String bearerToken, String tripId) {
+
+        String idToken = bearerToken.substring(7);
+
+        log.info("idToken");
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        documentReference.delete();
     }
 
     private FirebaseToken decodeToken(String idToken) {

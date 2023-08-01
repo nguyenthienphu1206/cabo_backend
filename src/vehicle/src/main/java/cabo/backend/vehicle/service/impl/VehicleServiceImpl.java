@@ -1,5 +1,6 @@
 package cabo.backend.vehicle.service.impl;
 
+import cabo.backend.vehicle.dto.DocumentRef;
 import cabo.backend.vehicle.dto.VehicleDto;
 import cabo.backend.vehicle.entity.Vehicle;
 import cabo.backend.vehicle.exception.ResourceNotFoundException;
@@ -36,7 +37,23 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public VehicleDto getVehicle(String vehicleId) {
+    public DocumentRef getDocumentById(String bearerToken, String vehicleId) {
+
+        DocumentReference documentReference = collectionRefVehicle.document(vehicleId);
+
+        DocumentRef documentRef = DocumentRef.builder()
+                .documentReference(documentReference)
+                .build();
+
+        return documentRef;
+    }
+
+    @Override
+    public VehicleDto getVehicle(String bearerToken, String vehicleId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         DocumentReference documentReference = collectionRefVehicle.document(vehicleId);
 
@@ -71,7 +88,11 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public String registerVehicle(VehicleDto vehicleDto) {
+    public String registerVehicle(String bearerToken, VehicleDto vehicleDto) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
         Vehicle vehicle = Vehicle.builder()
                 .slot(vehicleDto.getSlot())

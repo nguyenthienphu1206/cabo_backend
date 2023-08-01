@@ -29,13 +29,12 @@ public class BookingController {
 
     @PostMapping("/send-notification-designate-driver")
     public ResponseEntity<ResponseStatus> sendNotificationToDesignatedDriver(@RequestHeader("Authorization") String bearerToken,
-                                                               @PathVariable("uid") String uid,
-                                                               @RequestBody NotificationDto notificationDto) {
+                                                               @RequestBody RequestUidAndNotification requestUidAndNotification) {
 
         ResponseStatus responseStatus;
 
         try {
-            bookingService.sendNotificationToDesignatedDriver(bearerToken, uid, notificationDto);
+            bookingService.sendNotificationToDesignatedDriver(bearerToken, requestUidAndNotification.getUid(), requestUidAndNotification.getNotificationDto());
 
             responseStatus = new ResponseStatus(new Date(), "Successfully");
 

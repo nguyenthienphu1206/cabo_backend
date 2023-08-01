@@ -1,4 +1,4 @@
-package cabo.backend.booking.exception;
+package cabo.backend.customer.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

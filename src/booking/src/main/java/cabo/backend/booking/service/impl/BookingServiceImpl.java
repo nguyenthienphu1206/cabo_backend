@@ -38,14 +38,6 @@ public class BookingServiceImpl implements BookingService {
     @Autowired
     private TripServiceClient tripServiceClient;
 
-    private static final String COLLECTION_NAME_CUSTOMER = "customers";
-
-    private final CollectionReference collectionRefCustomer;
-
-    private static final String COLLECTION_NAME_TRIP = "trips";
-
-    private final CollectionReference collectionRefTrip;
-
     private static final String COLLECTION_NAME_FCMTOKEN = "fcmTokens";
 
     private final CollectionReference collectionRefFcmToken;
@@ -60,13 +52,9 @@ public class BookingServiceImpl implements BookingService {
 
         this.dbFirestore = firestore;
 
-        this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
-
         this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
 
         this.collectionRefGPS = dbFirestore.collection(COLLECTION_NAME_GPS);
-
-        this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
     }
 
     @Override
@@ -118,7 +106,10 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException(e);
         }
 
-        sendNotificationToSuitableDriver(fcmTokens, notificationDto, null);
+        Map<String, String> data = new HashMap<>();
+        data.put("data", "null");
+
+        sendNotificationToSuitableDriver(fcmTokens, notificationDto, data);
     }
 
     @Override
@@ -208,7 +199,7 @@ public class BookingServiceImpl implements BookingService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        ResponseTripId responseTripId = createTrip(customerId, requestBooking);
+        ResponseTripId responseTripId = createTrip(bearerToken, customerId, requestBooking);
 
         log.info("ResponseTripId: " + responseTripId);
 
@@ -223,7 +214,14 @@ public class BookingServiceImpl implements BookingService {
                     .body("GPS")
                     .build();
 
-            sendNotificationToSuitableDriver(getAllDeviceTokens(), notificationDto, null);
+            Map<String, String> dataNull = new HashMap<>();
+            dataNull.put("data", "null");
+
+            log.info("Test: dataNull");
+
+            sendNotificationToSuitableDriver(getAllDeviceTokens(), notificationDto, dataNull);
+
+            log.info("Test: sendNotificationToSuitableDriver");
 
             try {
                 Thread.sleep(5000); // Tạm dừng thực thi trong 5 giây
@@ -234,11 +232,17 @@ public class BookingServiceImpl implements BookingService {
             // Tìm ra tài xế phù hợp
             Map<String, String> data = getCustomerInfo(bearerToken, customerId, requestBooking);
 
+            log.info("CustomerInfo: " + data);
+
             String driverId = searchSuitableDriver(bearerToken, tripId, requestBooking.getCustomerOrderLocation(), data);
             ResponseDriverInformation responseDriverInformation = null;
 
+            log.info("Test: searchSuitableDriver");
+
             if (driverId != null) {
                 responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
+
+                log.info("Test: getDriverInformationFromDB");
             }
 
             // ---
@@ -249,6 +253,12 @@ public class BookingServiceImpl implements BookingService {
         ResponseDriverInformation responseDriverInformation = future.join();
 
         log.info("Test: " + responseDriverInformation);
+
+        if (responseDriverInformation == null) {
+            responseDriverInformation = new ResponseDriverInformation(null, new DriverInfo());
+
+            tripServiceClient.deleteTrip(bearerToken, tripId);
+        }
 
         return responseDriverInformation;
     }
@@ -278,9 +288,11 @@ public class BookingServiceImpl implements BookingService {
         return  responseDriverInformation;
     }
 
-    private ResponseTripId createTrip(String customerId, RequestBookADrive requestBooking) {
+    private ResponseTripId createTrip(String bearerToken, String customerId, RequestBookADrive requestBooking) {
 
-        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+        DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
+
+        DocumentReference documentReference = documentRef.getDocumentReference();
 
         GeoPoint geoPoint =new GeoPoint(0.0, 0.0);
 
@@ -302,7 +314,7 @@ public class BookingServiceImpl implements BookingService {
 
         log.info("test: ");
 
-        ResponseTripId responseTripId = tripServiceClient.createTrip(createTripDto);
+        ResponseTripId responseTripId = tripServiceClient.createTrip(bearerToken, createTripDto);
 
         log.info("responseTripId: " + responseTripId);
 
@@ -327,9 +339,17 @@ public class BookingServiceImpl implements BookingService {
 
                 suitableDriverUid = getListOfSuitableDriverUid(customerOrderLocation, x, x + 2.0);
 
+                log.info("searchSuitableDriver ---> suitableDriverUid: " + suitableDriverUid);
+
                 listOfFcmTokens = getListOfFcmToken(suitableDriverUid);
 
-                sendNotificationToSuitableDriver(listOfFcmTokens, notificationDto, data);
+                log.info("searchSuitableDriver ---> listOfFcmTokens: " + listOfFcmTokens);
+
+                if (listOfFcmTokens.size() > 0) {
+                    sendNotificationToSuitableDriver(listOfFcmTokens, notificationDto, data);
+                } else {
+                    continue;
+                }
 
                 long endTime = System.currentTimeMillis() + 5000;
 

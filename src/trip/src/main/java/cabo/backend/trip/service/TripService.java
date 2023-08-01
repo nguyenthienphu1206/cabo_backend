@@ -5,19 +5,21 @@ import com.google.cloud.firestore.GeoPoint;
 
 public interface TripService {
 
-    GeoPoint getDriverLocation(String tripId);
+    GeoPoint getDriverLocation(String bearerToken, String tripId);
 
-    ResponseTripId createTrip(CreateTripDto createTripDto);
+    ResponseTripId createTrip(String bearerToken, CreateTripDto createTripDto);
 
-    ResponseRecentTripFromCustomer getRecentTripFromCustomer(String customerId);
+    ResponseRecentTripFromCustomer getRecentTripFromCustomer(String bearerToken, String customerId);
 
-    ResponseRecentTripFromDriver getRecentTripFromDriver(String driverId);
+    ResponseRecentTripFromDriver getRecentTripFromDriver(String bearerToken, String driverId);
 
-    ResponseTotalTrip getTotalTrip(String collection, String id);
+    ResponseTotalTrip getTotalTrip(String bearerToken, String userType, String id);
 
-    ResponseAverageIncomePerDrive getAverageIncomePerDrive(String driverId);
+    ResponseAverageIncomePerDrive getAverageIncomePerDrive(String bearerToken, String driverId);
 
     String getDriverIdByTripId(String bearerToken, String tripId);
 
-    ResponseStatus sendReceivedDriverInfo(RequestReceivedDriverInfo requestReceivedDriverInfo);
+    ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+
+    void deleteTrip(String bearerToken, String tripId);
 }

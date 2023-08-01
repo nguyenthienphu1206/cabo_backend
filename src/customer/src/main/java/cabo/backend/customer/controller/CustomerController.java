@@ -42,6 +42,15 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @GetMapping("/document/{customerId}")
+    public  ResponseEntity<DocumentRef> getDocumentById(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("customerId") String customerId) {
+
+        DocumentRef documentRef = customerService.getDocumentById(bearerToken, customerId);
+
+        return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDto> getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                                           @PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
@@ -84,11 +93,21 @@ public class CustomerController {
     }
 
     @PostMapping("/drive-booking/estimate-cost")
-    public  ResponseEntity<ResponseEstimateCostAndDistance> getEstimateCostAndDistance(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseEstimateCostAndDistance> getEstimateCostAndDistance(@RequestHeader("Authorization") String bearerToken,
                                                                                        @RequestBody RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
 
         ResponseEstimateCostAndDistance responseEstimateCostAndDistance = customerService.getEstimateCostAndDistance(bearerToken, requestOriginsAndDestinationsLocation);
 
         return new ResponseEntity<>(responseEstimateCostAndDistance, HttpStatus.OK);
+    }
+
+    @PostMapping("/drive-booking/confirm/{customerId}")
+    public ResponseEntity<ResponseDriverInformation> bookADrive(@RequestHeader("Authorization") String bearerToken,
+                                                                @PathVariable("customerId") String customerId,
+                                                                @RequestBody RequestBookADrive requestBookADrive) {
+
+        ResponseDriverInformation responseDriverInformation = customerService.bookADrive(bearerToken, customerId, requestBookADrive);
+
+        return new ResponseEntity<>(responseDriverInformation, HttpStatus.OK);
     }
 }

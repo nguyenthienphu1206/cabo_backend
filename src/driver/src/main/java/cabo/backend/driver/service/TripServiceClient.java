@@ -1,30 +1,33 @@
 package cabo.backend.driver.service;
 
 import cabo.backend.driver.dto.*;
+import cabo.backend.driver.dto.ResponseStatus;
 import cabo.backend.driver.entity.GeoPoint;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(url = "${TRIP_SERVICE_URL}", value = "TRIP-SERVICE")
 public interface TripServiceClient {
 
     @GetMapping("/api/v1/trip/get-driver-location/{tripId}")
-    GeoPoint getDriverLocation(@PathVariable("tripId") String tripId);
+    GeoPoint getDriverLocation(@RequestHeader("Authorization") String bearerToken,
+                               @PathVariable("tripId") String tripId);
 
     @GetMapping("/api/v1/trip/recent-trip/driver/{driverId}")
-    TripDto getRecentTripFromDriver(@PathVariable("driverId") String driverId);
+    TripDto getRecentTripFromDriver(@RequestHeader("Authorization") String bearerToken,
+                                    @PathVariable("driverId") String driverId);
 
-    @GetMapping("/api/v1/trip/total-trip/{collection}/{id}")
-    ResponseTotalTrip getTotalTrip(@PathVariable("collection") String collection,
+    @GetMapping("/api/v1/trip/total-trip/{user}/{id}")
+    ResponseTotalTrip getTotalTrip(@RequestHeader("Authorization") String bearerToken,
+                                   @PathVariable("user") String userType,
                                    @PathVariable("id") String id);
 
 
     @GetMapping("/api/v1/trip/average-income/driver/{driverId}")
-    ResponseAverageIncomePerDrive getAverageIncomePerDrive(@PathVariable("driverId") String driverId);
+    ResponseAverageIncomePerDrive getAverageIncomePerDrive(@RequestHeader("Authorization") String bearerToken,
+                                                           @PathVariable("driverId") String driverId);
 
     @PostMapping("/api/v1/trip/drive-booking/accept-drive")
-    ResponseStatus sendReceivedDriverInfo(@RequestBody RequestReceivedDriverRefInfo requestReceivedDriverRefInfo);
+    ResponseStatus sendReceivedDriverInfo(@RequestHeader("Authorization") String bearerToken,
+                                          @RequestBody RequestReceivedDriverRefInfo requestReceivedDriverRefInfo);
 }

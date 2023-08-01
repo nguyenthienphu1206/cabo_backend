@@ -2,7 +2,9 @@ package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.exception.ResourceNotFoundException;
 import cabo.backend.customer.service.BingMapServiceClient;
+import cabo.backend.customer.service.BookingServiceClient;
 import cabo.backend.customer.service.CustomerService;
 import cabo.backend.customer.service.TripServiceClient;
 import com.google.api.core.ApiFuture;
@@ -10,7 +12,6 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private BingMapServiceClient bingMapServiceClient;
 
+    @Autowired
+    private BookingServiceClient bookingServiceClient;
+
     private static final String COLLECTION_NAME_CUSTOMER = "customers";
 
     private final CollectionReference collectionRefCustomer;
@@ -41,6 +45,18 @@ public class CustomerServiceImpl implements CustomerService {
         this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
     }
 
+
+    @Override
+    public DocumentRef getDocumentById(String bearerToken, String customerId) {
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        DocumentRef documentRef = DocumentRef.builder()
+                .documentReference(documentReference)
+                .build();
+
+        return documentRef;
+    }
 
     @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
@@ -170,7 +186,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
         //log.info("Test");
-        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(customerId);
+        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(bearerToken, customerId);
 
         ResponseRecentTrip responseRecentTrip = null;
 
@@ -195,7 +211,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 
         //log.info("Test1 " + tripDto);
-        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("customers", customerId);
+        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "customer", customerId);
 
         //log.info("Test2 " + responseTotalTrip);
         ResponseOverview responseOverview = ResponseOverview.builder()
@@ -230,6 +246,18 @@ public class CustomerServiceImpl implements CustomerService {
                 .build();
 
         return responseEstimateCostAndDistance;
+    }
+
+    @Override
+    public ResponseDriverInformation bookADrive(String bearerToken, String customerId, RequestBookADrive requestBookADrive) {
+
+        ResponseDriverInformation responseDriverInformation = bookingServiceClient.getDriverInformation(bearerToken, customerId, requestBookADrive);
+
+        if (responseDriverInformation.getTripId() == null) {
+            throw new ResourceNotFoundException("Not Found The Driver");
+        }
+
+        return responseDriverInformation;
     }
 
     private FirebaseToken decodeToken(String idToken) {

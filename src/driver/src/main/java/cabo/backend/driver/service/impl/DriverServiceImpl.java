@@ -47,10 +47,6 @@ public class DriverServiceImpl implements DriverService {
 
     private final CollectionReference collectionRefDrvier;
 
-    private static final String COLLECTION_NAME_VEHICLE = "vehicles";
-
-    private final CollectionReference collectionRefVehicle;
-
     private static final String COLLECTION_NAME_ATTENDANCE = "attendance";
 
     private final CollectionReference collectionAttendance;
@@ -66,9 +62,20 @@ public class DriverServiceImpl implements DriverService {
         this.dbFirestore = firestore;
 
         this.collectionRefDrvier = dbFirestore.collection(COLLECTION_NAM_DRIVER);
-        this.collectionRefVehicle = dbFirestore.collection(COLLECTION_NAME_VEHICLE);
         this.collectionAttendance = dbFirestore.collection(COLLECTION_NAME_ATTENDANCE);
         this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
+    }
+
+    @Override
+    public DocumentRef getDocumentById(String bearerToken, String driverId) {
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        DocumentRef documentRef = DocumentRef.builder()
+                .documentReference(documentReference)
+                .build();
+
+        return documentRef;
     }
 
     @Override
@@ -95,9 +102,9 @@ public class DriverServiceImpl implements DriverService {
 
                     String vehicleId = vehicleIdRef.getId();
 
-                    VehicleDto vehicleDto = vehicleServiceClient.getVehicle(vehicleId);
+                    VehicleDto vehicleDto = vehicleServiceClient.getVehicle(bearerToken, vehicleId);
 
-                    GeoPoint driverLocation = tripServiceClient.getDriverLocation(tripId);
+                    GeoPoint driverLocation = tripServiceClient.getDriverLocation(bearerToken, tripId);
 
                     driverInfo = DriverInfo.builder()
                             .fullName(driver.getFullName())
@@ -290,8 +297,11 @@ public class DriverServiceImpl implements DriverService {
         String vehicleId = "";
         if (document.exists()) {
             // Đăng Kí vehicle và trả về vehicleId
-            vehicleId = vehicleServiceClient.registerVehicle(requestRegisterVehicle);
-            DocumentReference vehicleDocumentReference = collectionRefVehicle.document(vehicleId);
+            vehicleId = vehicleServiceClient.registerVehicle(bearerToken, requestRegisterVehicle);
+
+            DocumentRef documentRef = vehicleServiceClient.getDocumentById(bearerToken, vehicleId);
+
+            DocumentReference vehicleDocumentReference = documentRef.getDocumentReference();
 
             Driver driver = document.toObject(Driver.class);
 
@@ -426,7 +436,7 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
         log.info("Test");
-        TripDto tripDto = tripServiceClient.getRecentTripFromDriver(driverId);
+        TripDto tripDto = tripServiceClient.getRecentTripFromDriver(bearerToken, driverId);
 
         ResponseRecentTrip responseRecentTrip = null;
 
@@ -450,10 +460,10 @@ public class DriverServiceImpl implements DriverService {
 
         //log.info("Test1 " + tripDto);
 
-        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip("drivers", driverId);
+        ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "driver", driverId);
 
 
-        ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripServiceClient.getAverageIncomePerDrive(driverId);
+        ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripServiceClient.getAverageIncomePerDrive(bearerToken, driverId);
 
         //log.info("Test2 " + responseTotalTrip);
         ResponseOverview responseOverview = ResponseOverview.builder()
@@ -498,7 +508,7 @@ public class DriverServiceImpl implements DriverService {
                 .currentLocation(requestReceivedDriverInfo.getCurrentLocation())
                 .build();
 
-        ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(requestReceivedDriverRefInfo);
+        ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(bearerToken, requestReceivedDriverRefInfo);
 
         sendNotification(bearerToken, requestReceivedDriverInfo.getDriverId(), responseStatus.getMessage());
 
@@ -553,7 +563,12 @@ public class DriverServiceImpl implements DriverService {
                                 .body("BOOKING_CLOSE")
                                 .build();
 
-                        ResponseStatus rsNotify = bookingServiceClient.sendNotificationToDesignatedDriver(bearerToken, uid, notificationDto);
+                        RequestUidAndNotification requestUidAndNotification = RequestUidAndNotification.builder()
+                                .uid(uid)
+                                .notificationDto(notificationDto)
+                                .build();
+
+                        ResponseStatus rsNotify = bookingServiceClient.sendNotificationToDesignatedDriver(bearerToken, requestUidAndNotification);
 
                         ResponseStatus rsRemoveAllGPS = bookingServiceClient.removeAllGPS(bearerToken);
                     }

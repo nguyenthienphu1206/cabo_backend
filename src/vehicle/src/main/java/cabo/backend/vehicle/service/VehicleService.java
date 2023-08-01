@@ -1,10 +1,13 @@
 package cabo.backend.vehicle.service;
 
+import cabo.backend.vehicle.dto.DocumentRef;
 import cabo.backend.vehicle.dto.VehicleDto;
 
 public interface VehicleService {
 
-    VehicleDto getVehicle(String vehicleId);
+    DocumentRef getDocumentById(String bearerToken, String vehicleId);
 
-    String registerVehicle(VehicleDto vehicleDto);
+    VehicleDto getVehicle(String bearerToken, String vehicleId);
+
+    String registerVehicle(String bearerToken, VehicleDto vehicleDto);
 }
