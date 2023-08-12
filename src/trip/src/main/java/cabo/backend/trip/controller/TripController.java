@@ -98,6 +98,16 @@ public class TripController {
         return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
     }
 
+    @PutMapping("/trip/{tripId}")
+    public ResponseEntity<ResponseStatus> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+                                                           @PathVariable("tripId") String tripId,
+                                                           @RequestParam("status") String status) {
+
+        ResponseStatus responseStatus = tripService.updateTripStatus(bearerToken, tripId, status);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+    }
+
     @DeleteMapping("/trip/{tripId}")
     public ResponseEntity<ResponseStatus> deleteTrip(@RequestHeader("Authorization") String bearerToken,
                                                      @PathVariable("tripId") String tripId) {

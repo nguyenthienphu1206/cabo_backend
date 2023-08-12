@@ -12,7 +12,9 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.messaging.*;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,7 +50,17 @@ public class BookingServiceImpl implements BookingService {
 
     private Firestore dbFirestore;
 
-    public BookingServiceImpl(Firestore firestore) {
+    @Value("${rabbitmq.exchange.status.name}")
+    private String statusExchange;
+
+    @Value("${rabbitmq.binding.status.routing.key}")
+    private String statusRoutingKey;
+
+    private final RabbitTemplate rabbitTemplate;
+
+    public BookingServiceImpl(RabbitTemplate rabbitTemplate, Firestore firestore) {
+
+        this.rabbitTemplate = rabbitTemplate;
 
         this.dbFirestore = firestore;
 
@@ -207,6 +219,12 @@ public class BookingServiceImpl implements BookingService {
 
         log.info("tripId: " + tripId);
 
+        // Update trip status
+        ResponseStatus responseStatus = tripServiceClient.updateTripStatus(bearerToken, tripId, "TRIP_STATUS_SEARCHING");
+
+        // Send event to status queue
+        rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, tripId);
+
         CompletableFuture<ResponseDriverInformation> future = CompletableFuture.supplyAsync(() -> {
             // Gửi thông báo
             NotificationDto notificationDto = NotificationDto.builder()
@@ -242,6 +260,12 @@ public class BookingServiceImpl implements BookingService {
             if (driverId != null) {
                 responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
 
+                // Update trip status
+                tripServiceClient.updateTripStatus(bearerToken, tripId, "TRIP_STATUS_PICKING");
+
+                // Send event to status queue
+                rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, tripId);
+
                 log.info("Test: getDriverInformationFromDB");
             }
 
@@ -261,6 +285,11 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return responseDriverInformation;
+    }
+
+
+    public void bookDriveFromCallCenter(RequestBookADrive requestBookADrive) {
+
     }
 
     private FirebaseToken decodeToken(String idToken) {
@@ -297,6 +326,9 @@ public class BookingServiceImpl implements BookingService {
         GeoPoint geoPoint =new GeoPoint(0.0, 0.0);
 
         log.info("documentReference: " + documentReference);
+
+        // Tính distance
+
 
         CreateTripDto createTripDto = CreateTripDto.builder()
                 .cost(requestBooking.getCost())

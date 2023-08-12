@@ -63,10 +63,10 @@ public class CustomerServiceImpl implements CustomerService {
 
         String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
-        String uid = decodedToken.getUid();
-        log.info("UID -----> " + uid);
+        //String uid = decodedToken.getUid();
+        //log.info("UID -----> " + uid);
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
@@ -78,21 +78,42 @@ public class CustomerServiceImpl implements CustomerService {
 
             if (querySnapshot.isEmpty()) {
 
+                log.info("Empty");
+
                 Customer customer = Customer.builder()
-                        .uid(uid)
+                        //.uid(uid)
                         .fullName(requestRegisterCustomer.getFullName())
                         .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                         .avatar("")
                         .vip(false)
+                        .isRegisteredOnApp(true)
                         .build();
 
                 DocumentReference documentReference = collectionRefCustomer.document();
 
-                ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
+                documentReference.set(customer);
 
                 customerId = documentReference.getId();
-            }
-            else {
+
+            } else {
+                QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+                Boolean isRegisteredOnApp = queryDocumentSnapshot.getBoolean("isRegisteredOnApp");
+
+                if (Boolean.FALSE.equals(isRegisteredOnApp)) {
+
+                    Customer customerInDB = Customer.builder()
+                            //.uid(uid)
+                            .fullName(requestRegisterCustomer.getFullName())
+                            .phoneNumber(requestRegisterCustomer.getPhoneNumber())
+                            .avatar("")
+                            .vip(false)
+                            .isRegisteredOnApp(true)
+                            .build();
+
+                    DocumentReference documentReference = collectionRefCustomer.document(queryDocumentSnapshot.getId());
+
+                    documentReference.set(customerInDB);
+                }
                 customerId = querySnapshot.getDocuments().get(0).getId();
             }
         } catch (InterruptedException | ExecutionException e) {

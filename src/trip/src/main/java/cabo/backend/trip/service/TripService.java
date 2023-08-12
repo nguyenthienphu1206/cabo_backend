@@ -21,5 +21,7 @@ public interface TripService {
 
     ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 
+    ResponseStatus updateTripStatus(String bearerToken, String tripId, String status);
+
     void deleteTrip(String bearerToken, String tripId);
 }

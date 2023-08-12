@@ -6,6 +6,7 @@ import cabo.backend.trip.exception.ResourceNotFoundException;
 import cabo.backend.trip.service.CustomerServiceClient;
 import cabo.backend.trip.service.DriverServiceClient;
 import cabo.backend.trip.service.TripService;
+import cabo.backend.trip.utils.AppConstants;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
@@ -353,6 +354,45 @@ public class TripServiceImpl implements TripService {
         }
 
         return new ResponseStatus(new Date(), "Failed");
+    }
+
+    @Override
+    public ResponseStatus updateTripStatus(String bearerToken, String tripId, String status) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        DocumentSnapshot document;
+
+        try {
+            document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+
+                    AppConstants.StatusTrip statusTrip = AppConstants.StatusTrip.valueOf(status);
+
+                    trip.setStatus(statusTrip.toString());
+
+                    documentReference.set(trip);
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Trip", "tripId", tripId);
+            }
+
+        } catch (InterruptedException | ExecutionException | IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ResponseStatus(new Date(), "Successfully");
     }
 
     @Override

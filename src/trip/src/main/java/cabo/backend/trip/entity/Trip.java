@@ -42,4 +42,6 @@ public class Trip {
     private GeoPoint toLocation;
 
     private int paymentType;
+
+    private String status;
 }

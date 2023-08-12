@@ -16,9 +16,13 @@ public class RequestBookADrive {
 
     private GeoPoint toLocation;
 
-    private long cost;
+    private String customerPhoneNumber;
 
     private double distance;
+
+    private long cost;
+
+    private String carType;
 
     private int paymentType;
 }
