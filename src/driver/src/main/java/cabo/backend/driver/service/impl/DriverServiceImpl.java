@@ -69,6 +69,10 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public DocumentRef getDocumentById(String bearerToken, String driverId) {
 
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
         DocumentReference documentReference = collectionRefDrvier.document(driverId);
 
         DocumentRef documentRef = DocumentRef.builder()
@@ -76,6 +80,35 @@ public class DriverServiceImpl implements DriverService {
                 .build();
 
         return documentRef;
+    }
+
+    @Override
+    public String getNameByDriverId(String bearerToken, String driverId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String fullName;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                fullName = document.getString("fullName");
+            }
+            else {
+                throw new ResourceNotFoundException("Driver", "DriverId", driverId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return fullName;
     }
 
     @Override

@@ -118,7 +118,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public TripDto getTrip(String bearToken, String tripId) {
+    public TripDto getTripById(String bearerToken, String tripId) {
 
         //String idToken = bearerToken.substring(7);
 
@@ -135,10 +135,8 @@ public class TripServiceImpl implements TripService {
                 Trip trip = document.toObject(Trip.class);
 
                 if (trip != null) {
-                    TripDto tripDto = TripDto.builder()
-                            .cost(trip.getCost())
 
-                            .build();
+                    return convertTripToTripDto(bearerToken, trip, tripId);
                 }
             }
             else {
@@ -393,7 +391,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public ResponseStatus updateTripStatus(String bearerToken, String tripId, String status) {
+    public TripDto updateTripStatus(String bearerToken, String tripId, String status) {
 
         String idToken = bearerToken.substring(7);
 
@@ -404,6 +402,8 @@ public class TripServiceImpl implements TripService {
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
         DocumentSnapshot document;
+
+        TripDto tripDto;
 
         try {
             document = future.get();
@@ -419,6 +419,10 @@ public class TripServiceImpl implements TripService {
                     trip.setUpdatedAt(Instant.now().getEpochSecond());
 
                     documentReference.set(trip);
+
+                    tripDto = convertTripToTripDto(bearerToken, trip, tripId);
+
+                    return tripDto;
                 }
             }
             else {
@@ -429,7 +433,7 @@ public class TripServiceImpl implements TripService {
             throw new RuntimeException(e);
         }
 
-        return new ResponseStatus(new Date(), "Successfully");
+        return null;
     }
 
     @Override
@@ -457,5 +461,29 @@ public class TripServiceImpl implements TripService {
         }
 
         return decodedToken;
+    }
+
+    private TripDto convertTripToTripDto(String bearerToken, Trip trip, String tripId) {
+
+        String customerName = customerServiceClient.getNameByCustomerId(bearerToken, tripId);
+        String driverName = driverServiceClient.getNameByDriverId(bearerToken, tripId);
+
+        TripDto tripDto = TripDto.builder()
+                .cost(trip.getCost())
+                .customerName(customerName)
+                .driverName(driverName)
+                .distance(trip.getDistance())
+                .startTime(trip.getStartTime())
+                .pickUpTime(trip.getPickUpTime())
+                .endTime(trip.getEndTime())
+                .customerOrderLocation(trip.getCustomerOrderLocation())
+                .driverStartLocation(trip.getDriverStartLocation())
+                .toLocation(trip.getToLocation())
+                .paymentType(trip.getPaymentType())
+                .status(trip.getStatus())
+                .updatedAt(trip.getUpdatedAt())
+                .build();
+
+        return tripDto;
     }
 }

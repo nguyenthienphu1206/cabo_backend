@@ -1,6 +1,6 @@
 package cabo.backend.taxistatusservice.dto;
 
-import cabo.backend.receiverservice.entity.GeoPoint;
+import cabo.backend.taxistatusservice.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -9,7 +9,7 @@ public interface TripService {
 
     ResponseTripId createTrip(String bearerToken, CreateTripDto createTripDto);
 
-    TripDto getTrip(String bearToken, String tripId);
+    TripDto getTripById(String bearerToken, String tripId);
 
     ResponseRecentTripFromCustomer getRecentTripFromCustomer(String bearerToken, String customerId);
 
@@ -23,7 +23,7 @@ public interface TripService {
 
     ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 
-    ResponseStatus updateTripStatus(String bearerToken, String tripId, String status);
+    TripDto updateTripStatus(String bearerToken, String tripId, String status);
 
     void deleteTrip(String bearerToken, String tripId);
 }

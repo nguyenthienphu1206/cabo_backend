@@ -13,4 +13,8 @@ public interface DriverServiceClient {
     @GetMapping("/api/v1/driver/document/{driverId}")
     DocumentRef getDocumentById(@RequestHeader("Authorization") String bearerToken,
                                 @PathVariable("driverId") String driverId);
+
+    @GetMapping("/api/v1/driver/{driverId}/getName")
+    String getNameByDriverId(@RequestHeader("Authorization") String bearerToken,
+                             @PathVariable("driverId") String driverId);
 }

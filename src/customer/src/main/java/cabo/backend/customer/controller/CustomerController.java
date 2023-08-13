@@ -60,6 +60,15 @@ public class CustomerController {
         return new ResponseEntity<>(documentRef, HttpStatus.OK);
     }
 
+    @GetMapping("/{customerId}/getName")
+    public ResponseEntity<String> getNameByCustomerId(@RequestHeader("Authorization") String bearerToken,
+                                                      @PathVariable("customerId") String customerId) {
+
+        String fullName = customerService.getNameByCustomerId(bearerToken, customerId);
+
+        return new ResponseEntity<>(fullName, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDto> getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                                           @PathVariable("id") String customerId) throws ExecutionException, InterruptedException {

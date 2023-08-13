@@ -19,13 +19,9 @@ public class TripDto {
 
     private long cost;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference customerId;
+    private String customerName;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference driverId;
+    private String driverName;
 
     private double distance;
 

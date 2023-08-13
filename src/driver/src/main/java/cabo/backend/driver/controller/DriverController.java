@@ -62,6 +62,15 @@ public class DriverController {
         return new ResponseEntity<>(documentRef, HttpStatus.OK);
     }
 
+    @GetMapping("/{driverId}/getName")
+    public ResponseEntity<String> getNameByDriverId(@RequestHeader("Authorization") String bearerToken,
+                                                      @PathVariable("driverId") String driverId) {
+
+        String fullName = driverService.getNameByDriverId(bearerToken, driverId);
+
+        return new ResponseEntity<>(fullName, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDriverDetails> getDriverDetails(@RequestHeader("Authorization") String bearerToken,
                                                                   @PathVariable("id") String driverId) throws ExecutionException, InterruptedException {

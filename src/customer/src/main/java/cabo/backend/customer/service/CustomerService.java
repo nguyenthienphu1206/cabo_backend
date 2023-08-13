@@ -6,6 +6,8 @@ public interface CustomerService {
 
     DocumentRef getDocumentById(String bearerToken, String customerId);
 
+    String getNameByCustomerId(String bearerToken, String customerId);
+
     String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
     String createCustomerIfPhoneNumberNotRegistered(String bearerToken, String phoneNumber);

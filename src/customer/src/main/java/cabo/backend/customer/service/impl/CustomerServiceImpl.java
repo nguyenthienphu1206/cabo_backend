@@ -49,6 +49,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public DocumentRef getDocumentById(String bearerToken, String customerId) {
 
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
         DocumentReference documentReference = collectionRefCustomer.document(customerId);
 
         DocumentRef documentRef = DocumentRef.builder()
@@ -56,6 +60,35 @@ public class CustomerServiceImpl implements CustomerService {
                 .build();
 
         return documentRef;
+    }
+
+    @Override
+    public String getNameByCustomerId(String bearerToken, String customerId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String fullName;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                fullName = document.getString("fullName");
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return fullName;
     }
 
     @Override

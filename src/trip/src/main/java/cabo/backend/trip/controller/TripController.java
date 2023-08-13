@@ -31,7 +31,7 @@ public class TripController {
         return new ResponseEntity<>(driverLocation, HttpStatus.OK);
     }
 
-    @PostMapping("/trip/create-trip")
+    @PostMapping("/trip")
     public ResponseEntity<ResponseTripId> createTrip(@RequestHeader("Authorization") String bearerToken,
                                                      @RequestBody CreateTripDto createTripDto) {
 
@@ -40,6 +40,15 @@ public class TripController {
         ResponseTripId responseTripId = tripService.createTrip(bearerToken, createTripDto);
 
         return new ResponseEntity<>(responseTripId, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/trip/{tripId}")
+    public ResponseEntity<TripDto> getTripById(@RequestHeader("Authorization") String bearerToken,
+                                               @PathVariable("tripId") String tripId) {
+
+        TripDto tripDto = tripService.getTripById(bearerToken, tripId);
+
+        return new ResponseEntity<>(tripDto, HttpStatus.OK);
     }
 
     @GetMapping("/trip/recent-trip/customer/{customerId}")
@@ -99,13 +108,13 @@ public class TripController {
     }
 
     @PutMapping("/trip/{tripId}")
-    public ResponseEntity<ResponseStatus> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<TripDto> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
                                                            @PathVariable("tripId") String tripId,
                                                            @RequestParam("status") String status) {
 
-        ResponseStatus responseStatus = tripService.updateTripStatus(bearerToken, tripId, status);
+        TripDto tripDto = tripService.updateTripStatus(bearerToken, tripId, status);
 
-        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+        return new ResponseEntity<>(tripDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/trip/{tripId}")
