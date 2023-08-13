@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.messaging.*;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -211,6 +212,7 @@ public class BookingServiceImpl implements BookingService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
+        // Tạo 1 chuyến đi
         ResponseTripId responseTripId = createTrip(bearerToken, customerId, requestBooking);
 
         log.info("ResponseTripId: " + responseTripId);
@@ -220,10 +222,7 @@ public class BookingServiceImpl implements BookingService {
         log.info("tripId: " + tripId);
 
         // Update trip status
-        ResponseStatus responseStatus = tripServiceClient.updateTripStatus(bearerToken, tripId, "TRIP_STATUS_SEARCHING");
-
-        // Send event to status queue
-        rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, tripId);
+        sendStatusEventToStatusQueue(bearerToken, tripId, "TRIP_STATUS_SEARCHING");
 
         CompletableFuture<ResponseDriverInformation> future = CompletableFuture.supplyAsync(() -> {
             // Gửi thông báo
@@ -261,10 +260,7 @@ public class BookingServiceImpl implements BookingService {
                 responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
 
                 // Update trip status
-                tripServiceClient.updateTripStatus(bearerToken, tripId, "TRIP_STATUS_PICKING");
-
-                // Send event to status queue
-                rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, tripId);
+                sendStatusEventToStatusQueue(bearerToken, tripId, "TRIP_STATUS_PICKING");
 
                 log.info("Test: getDriverInformationFromDB");
             }
@@ -287,9 +283,24 @@ public class BookingServiceImpl implements BookingService {
         return responseDriverInformation;
     }
 
+    // Đặt xe từ phía Call-Center
+    @RabbitListener(queues = "${rabbitmq.queue.booking.name}")
+    public void bookDriveFromCallCenter(RequestBookADriveEvent requestBookADriveEvent) {
+        String bearerToken = requestBookADriveEvent.getBearerToken();
+        String idToken = bearerToken.substring(7);
 
-    public void bookDriveFromCallCenter(RequestBookADrive requestBookADrive) {
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
+        // Create trip
+        ResponseTripId responseTripId = createTrip(bearerToken,
+                requestBookADriveEvent.getCustomerId(),
+                requestBookADriveEvent.getRequestBookADrive());
+
+        log.info("ResponseTripId: " + responseTripId);
+
+        String tripId = responseTripId.getTripId();
+
+        log.info("tripId: " + tripId);
     }
 
     private FirebaseToken decodeToken(String idToken) {
@@ -513,8 +524,41 @@ public class BookingServiceImpl implements BookingService {
 
     private double getProfit(long cost) {
 
-       double profit = cost * 80.0/100.0;
+        return cost * 80.0/100.0;
+    }
 
-        return profit;
+    private void sendStatusEventToStatusQueue(String bearerToken, String tripId, String status) {
+
+        String fcmToken = getFcmTokenCallCenter();
+
+        DriveStatus driveStatus = DriveStatus.builder()
+                .bearerToken(bearerToken)
+                .fcmToken(fcmToken)
+                .tripId(tripId)
+                .status(status)
+                .build();
+
+        // Send event to status queue
+        rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, driveStatus);
+    }
+
+    private String getFcmTokenCallCenter() {
+
+        Query query = collectionRefFcmToken.whereEqualTo("isDriver", false);
+
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        QuerySnapshot querySnapshot;
+
+        try {
+            querySnapshot = querySnapshotFuture.get();
+
+            QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+
+            return queryDocumentSnapshot.getString("fcmToken");
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

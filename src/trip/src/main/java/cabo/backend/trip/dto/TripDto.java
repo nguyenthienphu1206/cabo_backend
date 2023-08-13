@@ -31,11 +31,19 @@ public class TripDto {
 
     private long startTime;
 
+    private long pickUpTime;
+
     private long endTime;
 
-    private GeoPoint fromLocation;
+    private GeoPoint customerOrderLocation;
+
+    private GeoPoint driverStartLocation;
 
     private GeoPoint toLocation;
 
     private int paymentType;
+
+    private String status;
+
+    private long updatedAt;
 }

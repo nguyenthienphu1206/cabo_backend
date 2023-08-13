@@ -124,6 +124,47 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public String createCustomerIfPhoneNumberNotRegistered(String bearerToken, String phoneNumber) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        //String uid = decodedToken.getUid();
+
+        Query query = collectionRefCustomer.whereEqualTo("phoneNumber", phoneNumber);
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        QuerySnapshot querySnapshot;
+
+        try {
+            querySnapshot = querySnapshotFuture.get();
+
+            if (querySnapshot.isEmpty()) {
+
+                Customer customer = Customer.builder()
+                        .uid("")
+                        .fullName("")
+                        .phoneNumber(phoneNumber)
+                        .avatar("")
+                        .vip(false)
+                        .isRegisteredOnApp(false)
+                        .build();
+
+                DocumentReference documentReference = collectionRefCustomer.document();
+
+                documentReference.set(customer);
+
+                return documentReference.getId();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return querySnapshot.getDocuments().get(0).getId();
+    }
+
+    @Override
     public String saveCustomer(String bearerToken, CustomerDto customerDto) {
 
         String idToken = bearerToken.substring(7);

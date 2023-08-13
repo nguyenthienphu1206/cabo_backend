@@ -21,7 +21,7 @@ public class FirebaseInitialization {
         FileInputStream serviceAccount = null;
 
         try {
-            serviceAccount = new FileInputStream("./receiver-service/serviceAccountKey.json");
+            serviceAccount = new FileInputStream("./receiverservice/serviceAccountKey.json");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -30,7 +30,16 @@ public class CustomerController {
 
         ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
 
-        return new ResponseEntity<>(responseCustomerId, HttpStatus.OK);
+        return new ResponseEntity<>(responseCustomerId, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/call-center/register")
+    public ResponseEntity<String> createCustomerIfPhoneNumberNotRegistered(@RequestHeader("Authorization") String bearerToken,
+                                                                           @PathVariable("phoneNumber") String phoneNumber) {
+
+        String customerId = customerService.createCustomerIfPhoneNumberNotRegistered(bearerToken, phoneNumber);
+
+        return new ResponseEntity<>(customerId, HttpStatus.CREATED);
     }
 
     @PostMapping("")

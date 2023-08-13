@@ -13,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SpringDocConfig implements WebMvcConfigurer {
 
     @Bean
-    public OpenAPI driverOpenAPI() {
+    public OpenAPI receiverOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("Receiver Service")
@@ -28,9 +28,9 @@ public class SpringDocConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public GroupedOpenApi driverApi() {
+    public GroupedOpenApi receiverApi() {
         return GroupedOpenApi.builder()
-                .addOpenApiCustomiser(openApi -> openApi.info(driverOpenAPI().getInfo()))
+                .addOpenApiCustomiser(openApi -> openApi.info(receiverOpenAPI().getInfo()))
                 .group("Receiver-Service")
                 .packagesToScan("cabo.backend.receiver-service.controller")
                 .build();

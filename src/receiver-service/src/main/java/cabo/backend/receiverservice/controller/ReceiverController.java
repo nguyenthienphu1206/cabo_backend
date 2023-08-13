@@ -1,16 +1,11 @@
 package cabo.backend.receiverservice.controller;
 
 import cabo.backend.receiverservice.dto.RequestBookADrive;
-import cabo.backend.receiverservice.dto.RequestBookADriveEvent;
 import cabo.backend.receiverservice.dto.ResponseStatus;
 import cabo.backend.receiverservice.publisher.ReceiverProducer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 
@@ -18,23 +13,28 @@ import java.util.Date;
 @RequestMapping("/api/v1")
 public class ReceiverController {
 
-    private ReceiverProducer receiverProducer;
+    private final ReceiverProducer receiverProducer;
 
     public ReceiverController(ReceiverProducer receiverProducer) {
         this.receiverProducer = receiverProducer;
     }
 
-    @PostMapping("/call-center/drive-booking/confirm")
-    public ResponseEntity<ResponseStatus> placeLocation(@RequestBody RequestBookADrive requestBookADrive) {
+    @PostMapping("/receiver-service")
+    public ResponseEntity<ResponseStatus> receiverAndBookDriverFromCallCenter(@RequestHeader("Authorization") String bearerToken,
+                                                                              @RequestBody RequestBookADrive requestBookADrive) {
 
         ResponseStatus responseStatus;
         try {
+            receiverProducer.sendInforToBookingQueue(bearerToken, requestBookADrive);
+
             responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.OK);
 
         } catch (Exception e) {
              responseStatus = new ResponseStatus(new Date(), e.getMessage());
-        }
 
-        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

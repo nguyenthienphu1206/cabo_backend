@@ -8,6 +8,8 @@ public interface CustomerService {
 
     String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
+    String createCustomerIfPhoneNumberNotRegistered(String bearerToken, String phoneNumber);
+
     String saveCustomer(String idToken, CustomerDto customerDto);
 
     CustomerDto getCustomerDetails(String idToken, String customerId);

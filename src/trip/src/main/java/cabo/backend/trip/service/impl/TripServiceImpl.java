@@ -12,11 +12,11 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -106,6 +106,7 @@ public class TripServiceImpl implements TripService {
                 .driverStartLocation(driverStartLocation)
                 .toLocation(toLocation)
                 .paymentType(createTripDto.getPaymentType())
+                .updatedAt(Instant.now().getEpochSecond())
                 .build();
 
         DocumentReference documentReference = collectionRefTrip.document();
@@ -114,6 +115,41 @@ public class TripServiceImpl implements TripService {
         ResponseTripId responseTripId = new ResponseTripId(new Date(), documentReference.getId());
 
         return responseTripId;
+    }
+
+    @Override
+    public TripDto getTrip(String bearToken, String tripId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+                    TripDto tripDto = TripDto.builder()
+                            .cost(trip.getCost())
+
+                            .build();
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "TripId", tripId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
     }
 
     @Override
@@ -380,6 +416,7 @@ public class TripServiceImpl implements TripService {
                     AppConstants.StatusTrip statusTrip = AppConstants.StatusTrip.valueOf(status);
 
                     trip.setStatus(statusTrip.toString());
+                    trip.setUpdatedAt(Instant.now().getEpochSecond());
 
                     documentReference.set(trip);
                 }

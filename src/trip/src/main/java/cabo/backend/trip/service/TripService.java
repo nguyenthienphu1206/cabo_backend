@@ -9,6 +9,8 @@ public interface TripService {
 
     ResponseTripId createTrip(String bearerToken, CreateTripDto createTripDto);
 
+    TripDto getTrip(String bearToken, String tripId);
+
     ResponseRecentTripFromCustomer getRecentTripFromCustomer(String bearerToken, String customerId);
 
     ResponseRecentTripFromDriver getRecentTripFromDriver(String bearerToken, String driverId);

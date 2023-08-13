@@ -487,6 +487,7 @@ public class DriverServiceImpl implements DriverService {
 
         FcmToken savedFcmToken = FcmToken.builder()
                 .fcmToken(fcmToken)
+                .isDriver(true)
                 .uid(uid)
                 .build();
 

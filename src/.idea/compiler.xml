@@ -13,6 +13,7 @@
         <module name="driver" />
         <module name="bing-map" />
         <module name="receiver-service" />
+        <module name="call-center" />
         <module name="customer" />
         <module name="vehicle" />
       </profile>
@@ -20,6 +21,7 @@
     <bytecodeTargetLevel>
       <module name="bing-map" target="11" />
       <module name="booking" target="11" />
+      <module name="call-center" target="11" />
       <module name="config-server" target="11" />
       <module name="customer" target="11" />
       <module name="customer-address" target="11" />
@@ -43,6 +45,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="bing-map" options="-parameters" />
       <module name="booking" options="-parameters" />
+      <module name="call-center" options="-parameters" />
       <module name="config-server" options="-parameters" />
       <module name="customer" options="-parameters" />
       <module name="customer-address" options="-parameters" />

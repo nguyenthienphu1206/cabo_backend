@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RequestBookADriveEvent {
 
-    private String status;
+    private String bearerToken;
 
-    private String message;
+    private String customerId;
 
     private RequestBookADrive requestBookADrive;
 }

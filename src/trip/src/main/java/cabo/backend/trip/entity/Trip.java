@@ -44,4 +44,6 @@ public class Trip {
     private int paymentType;
 
     private String status;
+
+    private long updatedAt;
 }

@@ -12,61 +12,34 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${rabbitmq.queue.location.name}")
-    private String locationQueue;
+    @Value("${rabbitmq.queue.booking.name}")
+    private String bookingQueue;
 
-    @Value("${rabbitmq.queue.status.name}")
-    private String statusQueue;
+    @Value("${rabbitmq.exchange.booking.name}")
+    private String bookingExchange;
 
-    @Value("${rabbitmq.exchange.location.name}")
-    private String locationExchange;
-
-    @Value("${rabbitmq.exchange.status.name}")
-    private String statusExchange;
-
-    @Value("${rabbitmq.binding.location.routing.key}")
-    private String locationRoutingKey;
-
-    @Value("${rabbitmq.binding.status.routing.key}")
-    private String statusRoutingKey;
+    @Value("${rabbitmq.binding.booking.routing.key}")
+    private String bookingRoutingKey;
 
     // spring bean for queue
     @Bean
-    public Queue locationQueue() {
-        return new Queue(locationQueue);
-    }
-
-    @Bean
-    public Queue statusQueue() {
-        return new Queue(statusQueue);
+    public Queue bookingQueue() {
+        return new Queue(bookingQueue);
     }
 
     // spring bean for exchange
     @Bean
-    public TopicExchange locationExchange() {
-        return new TopicExchange(locationExchange);
-    }
-
-    @Bean
-    public TopicExchange statusExchange() {
-        return new TopicExchange(statusExchange);
+    public TopicExchange bookingExchange() {
+        return new TopicExchange(bookingExchange);
     }
 
     // spring bean for binding between exchange and queue using routing key
     @Bean
     public Binding locationBinding() {
         return BindingBuilder
-                .bind(locationQueue())
-                .to(locationExchange())
-                .with(locationRoutingKey);
-    }
-
-    @Bean
-    public Binding statusBinding() {
-        return BindingBuilder
-                .bind(statusQueue())
-                .to(statusExchange())
-                .with(statusRoutingKey);
+                .bind(bookingQueue())
+                .to(bookingExchange())
+                .with(bookingRoutingKey);
     }
 
     // message converter

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/bing-map/bing-map.iml" filepath="$PROJECT_DIR$/bing-map/bing-map.iml" />
       <module fileurl="file://$PROJECT_DIR$/booking/booking.iml" filepath="$PROJECT_DIR$/booking/booking.iml" />
+      <module fileurl="file://$PROJECT_DIR$/call-center/call-center.iml" filepath="$PROJECT_DIR$/call-center/call-center.iml" />
       <module fileurl="file://$PROJECT_DIR$/customer/customer.iml" filepath="$PROJECT_DIR$/customer/customer.iml" />
       <module fileurl="file://$PROJECT_DIR$/driver/driver.iml" filepath="$PROJECT_DIR$/driver/driver.iml" />
       <module fileurl="file://$PROJECT_DIR$/receiver-service/receiver-service.iml" filepath="$PROJECT_DIR$/receiver-service/receiver-service.iml" />
