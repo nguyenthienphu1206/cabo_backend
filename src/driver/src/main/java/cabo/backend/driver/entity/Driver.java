@@ -18,7 +18,7 @@ public class Driver {
     private String fullName;
     private String phoneNumber;
     private String avatar;
-    private Boolean isWorking;
+    private int driverStatus;
 
     @JsonSerialize(using = DocumentReferenceSerializer.class)
     private DocumentReference vehicleId;

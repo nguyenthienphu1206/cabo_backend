@@ -10,9 +10,11 @@ public interface DriverService {
 
     DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId);
 
-    String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo);
+    String getUidByDriverId(String bearerToken, String driverId);
 
-    String saveDriver(String idToken, DriverDto driverDto);
+    Integer getDriverStatusIntByUid(String uid);
+
+    String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo);
 
     ResponseDriverDetails getDriverDetails(String idToken, String driverId);
 
@@ -20,9 +22,11 @@ public interface DriverService {
 
     String registerDriverVehicle(String idToken, String driverId, RequestRegisterVehicle requestRegisterVehicle);
 
-    ResponseCheckInOut checkIn(String bearerToken, RequestCheckIn requestCheckIn);
+    ResponseStatus checkIn(String bearerToken, RequestCheckIn requestCheckIn);
 
-    ResponseCheckInOut checkOut(String bearerToken, RequestCheckOut requestCheckOut);
+    ResponseStatus checkOut(String bearerToken, RequestCheckOut requestCheckOut);
+
+    ResponseStatus updateDriverStatus(String bearerToken, String driverId, int status);
 
     ResponseOverview getOverview(String idToken, String driverId);
 

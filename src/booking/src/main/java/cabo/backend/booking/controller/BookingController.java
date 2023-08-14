@@ -27,26 +27,6 @@ public class BookingController {
         return new ResponseEntity<>("Successfully", HttpStatus.OK);
     }
 
-    @PostMapping("/send-notification-designate-driver")
-    public ResponseEntity<ResponseStatus> sendNotificationToDesignatedDriver(@RequestHeader("Authorization") String bearerToken,
-                                                               @RequestBody RequestUidAndNotification requestUidAndNotification) {
-
-        ResponseStatus responseStatus;
-
-        try {
-            bookingService.sendNotificationToDesignatedDriver(bearerToken, requestUidAndNotification.getUid(), requestUidAndNotification.getNotificationDto());
-
-            responseStatus = new ResponseStatus(new Date(), "Successfully");
-
-            return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
-
-        } catch (Exception e) {
-
-            responseStatus = new ResponseStatus(new Date(), e.getMessage());
-
-            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @PostMapping("/drive-booking/current-gps")
     public ResponseEntity<ResponseStatus> collectGPS(@RequestHeader("Authorization") String bearerToken,
@@ -77,25 +57,5 @@ public class BookingController {
         ResponseDriverInformation responseDriverInformation = bookingService.getDriverInformation(bearerToken, customerId, requestBooking);
 
         return new ResponseEntity<>(responseDriverInformation, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/remove-all-gps")
-    public ResponseEntity<ResponseStatus> removeAllGPS(@RequestHeader("Authorization") String bearerToken) {
-
-        ResponseStatus responseStatus;
-
-        try {
-            bookingService.removeAllGPS(bearerToken);
-
-            responseStatus = new ResponseStatus(new Date(), "Successfully");
-
-            return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
-
-        } catch (Exception e) {
-
-            responseStatus = new ResponseStatus(new Date(), e.getMessage());
-
-            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 }

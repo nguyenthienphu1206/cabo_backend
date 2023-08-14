@@ -137,7 +137,7 @@ public class TripServiceImpl implements TripService {
 
                 if (trip != null) {
 
-                    return convertTripToTripDto(bearerToken, trip, tripId);
+                    return convertTripToTripDto(bearerToken, trip);
                 }
             }
             else {
@@ -168,13 +168,13 @@ public class TripServiceImpl implements TripService {
 
                 if (trip != null) {
 
-                    TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+                    TripDto tripDto = convertTripToTripDto(bearerToken, trip);
 
                     tripDtos.add(tripDto);
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         });
 
@@ -192,7 +192,7 @@ public class TripServiceImpl implements TripService {
 
         DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
 
-        Query query = collectionRefTrip.whereEqualTo("customerId", documentRef);
+        Query query = collectionRefTrip.whereEqualTo("customerId", documentRef.getDocumentReference());
 
         try {
             QuerySnapshot querySnapshot = query.get().get();
@@ -201,7 +201,7 @@ public class TripServiceImpl implements TripService {
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
-                TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip);
 
                 tripDtos.add(tripDto);
             }
@@ -223,7 +223,7 @@ public class TripServiceImpl implements TripService {
 
         DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, driverId);
 
-        Query query = collectionRefTrip.whereEqualTo("driverId", documentRef);
+        Query query = collectionRefTrip.whereEqualTo("driverId", documentRef.getDocumentReference());
 
         try {
             QuerySnapshot querySnapshot = query.get().get();
@@ -232,7 +232,7 @@ public class TripServiceImpl implements TripService {
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
-                TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip);
 
                 tripDtos.add(tripDto);
             }
@@ -513,7 +513,7 @@ public class TripServiceImpl implements TripService {
 
                     documentReference.set(trip);
 
-                    tripDto = convertTripToTripDto(bearerToken, trip, tripId);
+                    tripDto = convertTripToTripDto(bearerToken, trip);
 
                     return tripDto;
                 }
@@ -556,10 +556,23 @@ public class TripServiceImpl implements TripService {
         return decodedToken;
     }
 
-    private TripDto convertTripToTripDto(String bearerToken, Trip trip, String tripId) {
+    private TripDto convertTripToTripDto(String bearerToken, Trip trip) {
 
-        String customerName = customerServiceClient.getNameByCustomerId(bearerToken, tripId);
-        String driverName = driverServiceClient.getNameByDriverId(bearerToken, tripId);
+        String customerName = "";
+        String driverName = "";
+
+        DocumentReference customerRef = trip.getCustomerId();
+        DocumentReference driverRef = trip.getDriverId();
+
+        if (customerRef != null) {
+            String customerId = customerRef.getId();
+            customerName = customerServiceClient.getNameByCustomerId(bearerToken, customerId);
+        }
+
+        if (driverRef != null) {
+            String driverId = driverRef.getId();
+            driverName = driverServiceClient.getNameByDriverId(bearerToken, driverId);
+        }
 
         TripDto tripDto = TripDto.builder()
                 .cost(trip.getCost())

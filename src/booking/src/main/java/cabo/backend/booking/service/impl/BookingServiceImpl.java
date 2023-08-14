@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +79,7 @@ public class BookingServiceImpl implements BookingService {
                         .setTitle(notificationDto.getTitle())
                         .setBody(notificationDto.getBody())
                         .build())
-                .addAllTokens(getAllDeviceTokens())// Lấy danh sách các token của tất cả mobile client
+                .addAllTokens(getAllDeviceTokensDriver())// Lấy danh sách các token của tất cả mobile client
                 .build();
 
         try {
@@ -93,16 +94,16 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    @Override
-    public void sendNotificationToDesignatedDriver(String bearerToken, String uid, NotificationDto notificationDto) {
+    private void sendTripReceivedNotification(String bearerToken, String driverId) {
 
-        String idToken = bearerToken.substring(7);
+        NotificationDto notificationDto = NotificationDto.builder()
+                .title("BOOKING_CLOSED")
+                .body("BOOKING_CLOSED")
+                .build();
 
-        log.info("idToken");
+        String uid = driverServiceClient.getUidByDriverId(bearerToken, driverId);
 
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        List<String> fcmTokens = getAllDeviceTokens();
+        List<String> fcmTokens = getAllDeviceTokensDriver();
 
         Query query = collectionRefFcmToken.whereEqualTo("uid", uid);
 
@@ -113,20 +114,21 @@ public class BookingServiceImpl implements BookingService {
 
             String fcmToken = documents.get(0).getString("fcmToken");
 
+            // Bỏ đi tài xế đang nhận cuốc
             fcmTokens.remove(fcmToken);
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
+        // Gửi thông báo nhận cuốc thất bại đến các driver khác
         Map<String, String> data = new HashMap<>();
         data.put("data", "null");
 
         sendNotificationToSuitableDriver(fcmTokens, notificationDto, data);
     }
 
-    @Override
-    public void removeAllGPS(String bearerToken) {
+    private void removeAllGPS(String bearerToken) {
 
         String idToken = bearerToken.substring(7);
 
@@ -155,40 +157,10 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    // Phương thức này để lấy danh sách các token của tất cả mobile client
-    private List<String> getAllDeviceTokens() {
-
-        List<String> fcmTokens = new ArrayList<>();
-
-        // Lấy tất cả các tài liệu trong collection
-        ApiFuture<QuerySnapshot> future = collectionRefFcmToken.get();
-
-        List<QueryDocumentSnapshot> documents = null;
-
-        try {
-            documents = future.get().getDocuments();
-
-            for (QueryDocumentSnapshot document : documents) {
-
-                String fcmToken = document.getString("fcmToken");
-
-                fcmTokens.add(fcmToken);
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
-        log.info("FcmTokens: " + fcmTokens);
-
-        return fcmTokens;
-    }
-
     @Override
     public void collectGPSFromDriver(String bearerToken, RequestGPS requestGPS) {
 
         String idToken = bearerToken.substring(7);
-
-        log.info("idToken -----> " + idToken);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
@@ -196,11 +168,11 @@ public class BookingServiceImpl implements BookingService {
                 requestGPS.getCurrentLocation().getLongitude());
 
         GPS gps = GPS.builder()
-                .uid(requestGPS.getUid())
                 .currentLocation(currentLocation)
+                .time(Instant.now().getEpochSecond())
                 .build();
 
-        collectionRefGPS.document().set(gps);
+        collectionRefGPS.document(requestGPS.getUid()).set(gps);
     }
 
     @Override
@@ -208,14 +180,10 @@ public class BookingServiceImpl implements BookingService {
 
         String idToken = bearerToken.substring(7);
 
-        log.info("idToken");
-
         //FirebaseToken decodedToken = decodeToken(idToken);
 
         // Tạo 1 chuyến đi
         ResponseTripId responseTripId = createTrip(bearerToken, customerId, requestBooking);
-
-        log.info("ResponseTripId: " + responseTripId);
 
         String tripId = responseTripId.getTripId();
 
@@ -225,26 +193,9 @@ public class BookingServiceImpl implements BookingService {
         sendStatusEventToStatusQueue(bearerToken, tripId, "TRIP_STATUS_SEARCHING");
 
         CompletableFuture<ResponseDriverInformation> future = CompletableFuture.supplyAsync(() -> {
-            // Gửi thông báo
-            NotificationDto notificationDto = NotificationDto.builder()
-                    .title("GPS")
-                    .body("GPS")
-                    .build();
 
-            Map<String, String> dataNull = new HashMap<>();
-            dataNull.put("data", "null");
-
-            log.info("Test: dataNull");
-
-            sendNotificationToSuitableDriver(getAllDeviceTokens(), notificationDto, dataNull);
-
-            log.info("Test: sendNotificationToSuitableDriver");
-
-            try {
-                Thread.sleep(5000); // Tạm dừng thực thi trong 5 giây
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            // Gửi thông báo lấy GPS nếu thời gian lấy lần trước lâu hơn 60s
+            sendNotificationIfTimeExceedsThreshold();
 
             // Tìm ra tài xế phù hợp
             Map<String, String> data = getCustomerInfo(bearerToken, customerId, requestBooking);
@@ -259,13 +210,17 @@ public class BookingServiceImpl implements BookingService {
             if (driverId != null) {
                 responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
 
+                // Gửi thông báo đã có người nhận cuốc đến tất cả người còn lại
+                sendTripReceivedNotification(bearerToken, driverId);
+
                 // Update trip status
                 sendStatusEventToStatusQueue(bearerToken, tripId, "TRIP_STATUS_PICKING");
 
+                // Update driver status
+                driverServiceClient.updateDriverStatus(bearerToken, driverId, 2); // 2: Busy
+
                 log.info("Test: getDriverInformationFromDB");
             }
-
-            // ---
 
             return responseDriverInformation;
         });
@@ -325,9 +280,6 @@ public class BookingServiceImpl implements BookingService {
         GeoPoint geoPoint =new GeoPoint(0.0, 0.0);
 
         log.info("documentReference: " + documentReference);
-
-        // Tính distance
-
 
         CreateTripDto createTripDto = CreateTripDto.builder()
                 .cost(requestBooking.getCost())
@@ -395,9 +347,6 @@ public class BookingServiceImpl implements BookingService {
 
                 x += 2;
             }
-
-            removeAllGPS(bearerToken);
-
             return null;
         });
 
@@ -447,9 +396,8 @@ public class BookingServiceImpl implements BookingService {
                             currentLocation.getLatitude(), currentLocation.getLongitude());
 
                     if (distance >= from && distance <= to) {
-                        String uid = document.getString("uid");
 
-                        suitableDriverUid.add(uid);
+                        suitableDriverUid.add(document.getId());
                     }
                 }
             }
@@ -490,7 +438,8 @@ public class BookingServiceImpl implements BookingService {
         if (suitableDriverUid.size() > 0) {
 
             for (String uid : suitableDriverUid) {
-                Query query = collectionRefFcmToken.whereEqualTo("uid", uid);
+                Query query = collectionRefFcmToken.whereEqualTo("uid", uid)
+                        .whereEqualTo("isDriver", true);
 
                 try {
                     QuerySnapshot querySnapshot = query.get().get();
@@ -548,5 +497,103 @@ public class BookingServiceImpl implements BookingService {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void sendNotificationIfTimeExceedsThreshold() {
+
+        Query query = collectionRefGPS.orderBy("time", Query.Direction.DESCENDING).limit(1);
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+
+            if (!querySnapshot.isEmpty()) {
+                Long time = querySnapshot.getDocuments().get(0).getLong("time");
+
+                Long currentTime = Instant.now().getEpochSecond();
+
+                if (time != null && currentTime - time >= 60) {
+
+                    NotificationDto notificationDto = NotificationDto.builder()
+                            .title("GPS")
+                            .body("GPS")
+                            .build();
+
+                    Map<String, String> dataNull = new HashMap<>();
+                    dataNull.put("data", "null");
+
+                    log.info("Test: dataNull");
+
+                    sendNotificationToSuitableDriver(getAllFcmTokenOfOnlineDriver(), notificationDto, dataNull);
+
+                    log.info("Test: sendNotificationToSuitableDriver");
+
+                    Thread.sleep(5000); // Tạm dừng thực thi trong 5 giây
+                }
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Phương thức này để lấy danh sách các token của tất cả mobile client
+    private List<String> getAllDeviceTokensDriver() {
+
+        List<String> fcmTokens = new ArrayList<>();
+
+        // Lấy tất cả các tài liệu trong collection
+        ApiFuture<QuerySnapshot> future = collectionRefFcmToken.get();
+
+        List<QueryDocumentSnapshot> documents = null;
+
+        try {
+            documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+
+                if (Boolean.TRUE.equals(document.getBoolean("isDriver"))) {
+                    String fcmToken = document.getString("fcmToken");
+
+                    fcmTokens.add(fcmToken);
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        log.info("FcmTokens: " + fcmTokens);
+
+        return fcmTokens;
+    }
+
+    private List<String> getAllFcmTokenOfOnlineDriver() {
+
+        List<String> fcmTokens = new ArrayList<>();
+
+        // Lấy tất cả các tài liệu trong collection
+        ApiFuture<QuerySnapshot> future = collectionRefFcmToken.get();
+
+        List<QueryDocumentSnapshot> documents = null;
+
+        try {
+            documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+
+                Integer status = driverServiceClient.getDriverStatusIntByUid(document.getString("uid"));
+
+                if (Boolean.TRUE.equals(document.getBoolean("isDriver")) && status.equals(0)) {
+                    String fcmToken = document.getString("fcmToken");
+
+                    fcmTokens.add(fcmToken);
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        log.info("FcmTokens: " + fcmTokens);
+
+        return fcmTokens;
     }
 }

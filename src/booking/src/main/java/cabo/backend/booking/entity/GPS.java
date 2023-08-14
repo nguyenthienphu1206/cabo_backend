@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GPS {
 
-    private String uid;
-
     private GeoPoint currentLocation;
+
+    private long time;
 }
