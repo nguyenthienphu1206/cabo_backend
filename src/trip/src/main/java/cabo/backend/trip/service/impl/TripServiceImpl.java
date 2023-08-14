@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -148,6 +149,98 @@ public class TripServiceImpl implements TripService {
         }
 
         return null;
+    }
+
+    @Override
+    public List<TripDto> getAllTrip(String bearerToken) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        collectionRefTrip.listDocuments().forEach(documentReference -> {
+            try {
+                DocumentSnapshot document = documentReference.get().get();
+
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+
+                    TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+
+                    tripDtos.add(tripDto);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        return tripDtos;
+    }
+
+    @Override
+    public List<TripDto> getTripByCustomerId(String bearerToken, String customerId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
+
+        Query query = collectionRefTrip.whereEqualTo("customerId", documentRef);
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+
+                tripDtos.add(tripDto);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tripDtos;
+    }
+
+    @Override
+    public List<TripDto> getTripByDriverId(String bearerToken, String driverId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, driverId);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", documentRef);
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip, document.getId());
+
+                tripDtos.add(tripDto);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tripDtos;
     }
 
     @Override

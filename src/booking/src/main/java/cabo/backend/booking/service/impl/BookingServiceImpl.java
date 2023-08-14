@@ -287,20 +287,8 @@ public class BookingServiceImpl implements BookingService {
     @RabbitListener(queues = "${rabbitmq.queue.booking.name}")
     public void bookDriveFromCallCenter(RequestBookADriveEvent requestBookADriveEvent) {
         String bearerToken = requestBookADriveEvent.getBearerToken();
-        String idToken = bearerToken.substring(7);
 
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        // Create trip
-        ResponseTripId responseTripId = createTrip(bearerToken,
-                requestBookADriveEvent.getCustomerId(),
-                requestBookADriveEvent.getRequestBookADrive());
-
-        log.info("ResponseTripId: " + responseTripId);
-
-        String tripId = responseTripId.getTripId();
-
-        log.info("tripId: " + tripId);
+        getDriverInformation(bearerToken, requestBookADriveEvent.getCustomerId(), requestBookADriveEvent.getRequestBookADrive());
     }
 
     private FirebaseToken decodeToken(String idToken) {
