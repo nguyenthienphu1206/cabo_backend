@@ -9,10 +9,6 @@ public interface BookingService {
 
     void sendNotification(NotificationDto notificationDto);
 
-    void sendNotificationToDesignatedDriver(String bearerToken, String uid, NotificationDto notificationDto);
-
-    void removeAllGPS(String bearerToken);
-
     void collectGPSFromDriver(String bearerToken, RequestGPS requestGPS);
 
     ResponseDriverInformation getDriverInformation(String bearerToken, String customerId, RequestBookADrive requestBooking);

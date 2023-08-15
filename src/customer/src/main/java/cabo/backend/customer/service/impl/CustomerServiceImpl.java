@@ -49,6 +49,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public DocumentRef getDocumentById(String bearerToken, String customerId) {
 
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
         DocumentReference documentReference = collectionRefCustomer.document(customerId);
 
         DocumentRef documentRef = DocumentRef.builder()
@@ -59,14 +63,43 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public String getNameByCustomerId(String bearerToken, String customerId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String fullName;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                fullName = document.getString("fullName");
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return fullName;
+    }
+
+    @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
 
         String idToken = bearerToken.substring(7);
 
-        FirebaseToken decodedToken = decodeToken(idToken);
+        //FirebaseToken decodedToken = decodeToken(idToken);
 
-        String uid = decodedToken.getUid();
-        log.info("UID -----> " + uid);
+        //String uid = decodedToken.getUid();
+        //log.info("UID -----> " + uid);
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
@@ -78,21 +111,42 @@ public class CustomerServiceImpl implements CustomerService {
 
             if (querySnapshot.isEmpty()) {
 
+                log.info("Empty");
+
                 Customer customer = Customer.builder()
-                        .uid(uid)
+                        //.uid(uid)
                         .fullName(requestRegisterCustomer.getFullName())
                         .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                         .avatar("")
                         .vip(false)
+                        .isRegisteredOnApp(true)
                         .build();
 
                 DocumentReference documentReference = collectionRefCustomer.document();
 
-                ApiFuture<WriteResult> collectionApiFuture = documentReference.set(customer);
+                documentReference.set(customer);
 
                 customerId = documentReference.getId();
-            }
-            else {
+
+            } else {
+                QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+                Boolean isRegisteredOnApp = queryDocumentSnapshot.getBoolean("isRegisteredOnApp");
+
+                if (Boolean.FALSE.equals(isRegisteredOnApp)) {
+
+                    Customer customerInDB = Customer.builder()
+                            //.uid(uid)
+                            .fullName(requestRegisterCustomer.getFullName())
+                            .phoneNumber(requestRegisterCustomer.getPhoneNumber())
+                            .avatar("")
+                            .vip(false)
+                            .isRegisteredOnApp(true)
+                            .build();
+
+                    DocumentReference documentReference = collectionRefCustomer.document(queryDocumentSnapshot.getId());
+
+                    documentReference.set(customerInDB);
+                }
                 customerId = querySnapshot.getDocuments().get(0).getId();
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -100,6 +154,47 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return customerId;
+    }
+
+    @Override
+    public String createCustomerIfPhoneNumberNotRegistered(String bearerToken, String phoneNumber) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        //String uid = decodedToken.getUid();
+
+        Query query = collectionRefCustomer.whereEqualTo("phoneNumber", phoneNumber);
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        QuerySnapshot querySnapshot;
+
+        try {
+            querySnapshot = querySnapshotFuture.get();
+
+            if (querySnapshot.isEmpty()) {
+
+                Customer customer = Customer.builder()
+                        .uid("")
+                        .fullName("")
+                        .phoneNumber(phoneNumber)
+                        .avatar("")
+                        .vip(false)
+                        .isRegisteredOnApp(false)
+                        .build();
+
+                DocumentReference documentReference = collectionRefCustomer.document();
+
+                documentReference.set(customer);
+
+                return documentReference.getId();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return querySnapshot.getDocuments().get(0).getId();
     }
 
     @Override

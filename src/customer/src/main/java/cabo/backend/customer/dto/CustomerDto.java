@@ -15,4 +15,5 @@ public class CustomerDto {
     private String phoneNumber;
     private String avatar;
     private Boolean vip;
+    private Boolean isRegisteredOnApp;
 }

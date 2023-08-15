@@ -15,4 +15,8 @@ public interface CustomerServiceClient {
     DocumentRef getDocumentById(@RequestHeader("Authorization") String bearerToken,
                                 @PathVariable("customerId") String customerId);
 
+    @GetMapping("/api/v1/customer/{customerId}/getName")
+    String getNameByCustomerId(@RequestHeader("Authorization") String bearerToken,
+                               @PathVariable("customerId") String customerId);
+
 }

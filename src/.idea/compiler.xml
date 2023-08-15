@@ -7,10 +7,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="taxi-status-service" />
         <module name="booking" />
         <module name="trip" />
         <module name="driver" />
         <module name="bing-map" />
+        <module name="receiver-service" />
+        <module name="call-center" />
         <module name="customer" />
         <module name="vehicle" />
       </profile>
@@ -18,15 +21,20 @@
     <bytecodeTargetLevel>
       <module name="bing-map" target="11" />
       <module name="booking" target="11" />
+      <module name="call-center" target="11" />
       <module name="config-server" target="11" />
       <module name="customer" target="11" />
+      <module name="customer-address" target="11" />
       <module name="driver" target="11" />
+      <module name="elastic-search" target="11" />
       <module name="firebase" target="11" />
       <module name="google-maps" target="11" />
       <module name="gps" target="11" />
       <module name="infobip" target="17" />
       <module name="messagebird" target="17" />
+      <module name="receiver-service" target="11" />
       <module name="speedSMS" target="17" />
+      <module name="taxi-status-service" target="11" />
       <module name="trip" target="11" />
       <module name="twilio" target="17" />
       <module name="vbcs" target="17" />
@@ -37,15 +45,20 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="bing-map" options="-parameters" />
       <module name="booking" options="-parameters" />
+      <module name="call-center" options="-parameters" />
       <module name="config-server" options="-parameters" />
       <module name="customer" options="-parameters" />
+      <module name="customer-address" options="-parameters" />
       <module name="driver" options="-parameters" />
+      <module name="elastic-search" options="-parameters" />
       <module name="firebase" options="-parameters" />
       <module name="google-maps" options="-parameters" />
       <module name="gps" options="-parameters" />
       <module name="infobip" options="-parameters" />
       <module name="messagebird" options="-parameters" />
+      <module name="receiver-service" options="-parameters" />
       <module name="speedSMS" options="-parameters" />
+      <module name="taxi-status-service" options="-parameters" />
       <module name="trip" options="-parameters" />
       <module name="twilio" options="-parameters" />
       <module name="vbcs" options="-parameters" />

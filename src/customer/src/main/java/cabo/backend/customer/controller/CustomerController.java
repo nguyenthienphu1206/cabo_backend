@@ -30,7 +30,16 @@ public class CustomerController {
 
         ResponseCustomerId responseCustomerId = new ResponseCustomerId(new Date(), customerId);
 
-        return new ResponseEntity<>(responseCustomerId, HttpStatus.OK);
+        return new ResponseEntity<>(responseCustomerId, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/call-center/register")
+    public ResponseEntity<String> createCustomerIfPhoneNumberNotRegistered(@RequestHeader("Authorization") String bearerToken,
+                                                                           @PathVariable("phoneNumber") String phoneNumber) {
+
+        String customerId = customerService.createCustomerIfPhoneNumberNotRegistered(bearerToken, phoneNumber);
+
+        return new ResponseEntity<>(customerId, HttpStatus.CREATED);
     }
 
     @PostMapping("")
@@ -49,6 +58,15 @@ public class CustomerController {
         DocumentRef documentRef = customerService.getDocumentById(bearerToken, customerId);
 
         return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
+    @GetMapping("/{customerId}/getName")
+    public ResponseEntity<String> getNameByCustomerId(@RequestHeader("Authorization") String bearerToken,
+                                                      @PathVariable("customerId") String customerId) {
+
+        String fullName = customerService.getNameByCustomerId(bearerToken, customerId);
+
+        return new ResponseEntity<>(fullName, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

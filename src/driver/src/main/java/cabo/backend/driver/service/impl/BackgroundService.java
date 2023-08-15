@@ -90,7 +90,7 @@ public class BackgroundService {
                 driver = document.toObject(Driver.class);
 
                 if (driver != null) {
-                    driver.setIsWorking(false);
+                    driver.setDriverStatus(1);
 
                     ApiFuture<WriteResult> writeResult = documentReferenceDriver.set(driver);
 

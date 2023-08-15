@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -31,7 +32,7 @@ public class TripController {
         return new ResponseEntity<>(driverLocation, HttpStatus.OK);
     }
 
-    @PostMapping("/trip/create-trip")
+    @PostMapping("/trip")
     public ResponseEntity<ResponseTripId> createTrip(@RequestHeader("Authorization") String bearerToken,
                                                      @RequestBody CreateTripDto createTripDto) {
 
@@ -40,6 +41,41 @@ public class TripController {
         ResponseTripId responseTripId = tripService.createTrip(bearerToken, createTripDto);
 
         return new ResponseEntity<>(responseTripId, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/trip/{tripId}")
+    public ResponseEntity<TripDto> getTripById(@RequestHeader("Authorization") String bearerToken,
+                                               @PathVariable("tripId") String tripId) {
+
+        TripDto tripDto = tripService.getTripById(bearerToken, tripId);
+
+        return new ResponseEntity<>(tripDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip")
+    public ResponseEntity<List<TripDto>> getAllTrip(@RequestHeader("Authorization") String bearerToken) {
+
+        List<TripDto> tripDtos = tripService.getAllTrip(bearerToken);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/customer/{customerId}")
+    public ResponseEntity<List<TripDto>> getTripByCustomerId(@RequestHeader("Authorization") String bearerToken,
+                                                             @PathVariable("customerId") String customerId) {
+
+        List<TripDto> tripDtos = tripService.getTripByCustomerId(bearerToken, customerId);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/driver/{driverId}")
+    public ResponseEntity<List<TripDto>> getTripByDriverId(@RequestHeader("Authorization") String bearerToken,
+                                                             @PathVariable("driverId") String driverId) {
+
+        List<TripDto> tripDtos = tripService.getTripByDriverId(bearerToken, driverId);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 
     @GetMapping("/trip/recent-trip/customer/{customerId}")
@@ -96,6 +132,16 @@ public class TripController {
         ResponseStatus responseStatus = tripService.sendReceivedDriverInfo(bearerToken, requestReceivedDriverInfo);
 
         return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/trip/{tripId}")
+    public ResponseEntity<TripDto> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+                                                           @PathVariable("tripId") String tripId,
+                                                           @RequestParam("status") String status) {
+
+        TripDto tripDto = tripService.updateTripStatus(bearerToken, tripId, status);
+
+        return new ResponseEntity<>(tripDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/trip/{tripId}")

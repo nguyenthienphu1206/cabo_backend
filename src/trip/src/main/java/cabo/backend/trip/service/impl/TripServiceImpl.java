@@ -6,16 +6,18 @@ import cabo.backend.trip.exception.ResourceNotFoundException;
 import cabo.backend.trip.service.CustomerServiceClient;
 import cabo.backend.trip.service.DriverServiceClient;
 import cabo.backend.trip.service.TripService;
+import cabo.backend.trip.utils.AppConstants;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -105,6 +107,7 @@ public class TripServiceImpl implements TripService {
                 .driverStartLocation(driverStartLocation)
                 .toLocation(toLocation)
                 .paymentType(createTripDto.getPaymentType())
+                .updatedAt(Instant.now().getEpochSecond())
                 .build();
 
         DocumentReference documentReference = collectionRefTrip.document();
@@ -113,6 +116,131 @@ public class TripServiceImpl implements TripService {
         ResponseTripId responseTripId = new ResponseTripId(new Date(), documentReference.getId());
 
         return responseTripId;
+    }
+
+    @Override
+    public TripDto getTripById(String bearerToken, String tripId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+
+                    return convertTripToTripDto(bearerToken, trip);
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "TripId", tripId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<TripDto> getAllTrip(String bearerToken) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        collectionRefTrip.listDocuments().forEach(documentReference -> {
+            try {
+                DocumentSnapshot document = documentReference.get().get();
+
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+
+                    TripDto tripDto = convertTripToTripDto(bearerToken, trip);
+
+                    tripDtos.add(tripDto);
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return tripDtos;
+    }
+
+    @Override
+    public List<TripDto> getTripByCustomerId(String bearerToken, String customerId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
+
+        Query query = collectionRefTrip.whereEqualTo("customerId", documentRef.getDocumentReference());
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip);
+
+                tripDtos.add(tripDto);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tripDtos;
+    }
+
+    @Override
+    public List<TripDto> getTripByDriverId(String bearerToken, String driverId) {
+
+        //String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        List<TripDto> tripDtos = new ArrayList<>();
+
+        DocumentRef documentRef = driverServiceClient.getDocumentById(bearerToken, driverId);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", documentRef.getDocumentReference());
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                TripDto tripDto = convertTripToTripDto(bearerToken, trip);
+
+                tripDtos.add(tripDto);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tripDtos;
     }
 
     @Override
@@ -356,6 +484,52 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public TripDto updateTripStatus(String bearerToken, String tripId, String status) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(tripId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        DocumentSnapshot document;
+
+        TripDto tripDto;
+
+        try {
+            document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+
+                    AppConstants.StatusTrip statusTrip = AppConstants.StatusTrip.valueOf(status);
+
+                    trip.setStatus(statusTrip.toString());
+                    trip.setUpdatedAt(Instant.now().getEpochSecond());
+
+                    documentReference.set(trip);
+
+                    tripDto = convertTripToTripDto(bearerToken, trip);
+
+                    return tripDto;
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Trip", "tripId", tripId);
+            }
+
+        } catch (InterruptedException | ExecutionException | IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
+    }
+
+    @Override
     public void deleteTrip(String bearerToken, String tripId) {
 
         String idToken = bearerToken.substring(7);
@@ -380,5 +554,52 @@ public class TripServiceImpl implements TripService {
         }
 
         return decodedToken;
+    }
+
+    private TripDto convertTripToTripDto(String bearerToken, Trip trip) {
+
+        String customerName = "";
+        String driverName = "";
+
+        DocumentReference customerRef = trip.getCustomerId();
+        DocumentReference driverRef = trip.getDriverId();
+
+        if (customerRef != null) {
+            String customerId = customerRef.getId();
+            customerName = customerServiceClient.getNameByCustomerId(bearerToken, customerId);
+        }
+
+        if (driverRef != null) {
+            String driverId = driverRef.getId();
+            driverName = driverServiceClient.getNameByDriverId(bearerToken, driverId);
+        }
+
+        TripDto tripDto = TripDto.builder()
+                .cost(trip.getCost())
+                .customerName(customerName)
+                .driverName(driverName)
+                .distance(trip.getDistance())
+                .startTime(trip.getStartTime())
+                .pickUpTime(trip.getPickUpTime())
+                .endTime(trip.getEndTime())
+                .customerOrderLocation(convertToGeoPointEntity(trip.getCustomerOrderLocation()))
+                .driverStartLocation(convertToGeoPointEntity(trip.getDriverStartLocation()))
+                .toLocation(convertToGeoPointEntity(trip.getToLocation()))
+                .paymentType(trip.getPaymentType())
+                .status(trip.getStatus())
+                .updatedAt(trip.getUpdatedAt())
+                .build();
+
+        return tripDto;
+    }
+
+    private cabo.backend.trip.entity.GeoPoint convertToGeoPointEntity(GeoPoint geoPointFirestore) {
+
+        cabo.backend.trip.entity.GeoPoint geoPoint = new cabo.backend.trip.entity.GeoPoint();
+
+        geoPoint.setLatitude(geoPointFirestore.getLatitude());
+        geoPoint.setLongitude(geoPointFirestore.getLongitude());
+
+        return geoPoint;
     }
 }

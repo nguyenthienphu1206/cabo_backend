@@ -33,6 +33,23 @@ public class DriverController {
         return new ResponseEntity<>(driverInfo, HttpStatus.OK);
     }
 
+    @GetMapping("/{driverId}/get-uid")
+    public ResponseEntity<String> getUidByDriverId(@RequestHeader("Authorization") String bearerToken,
+                                                   @PathVariable("driverId") String driverId) {
+
+        String uid = driverService.getUidByDriverId(bearerToken, driverId);
+
+        return new ResponseEntity<>(uid, HttpStatus.OK);
+    }
+
+    @GetMapping("/get-driver-status")
+    public ResponseEntity<Integer> getDriverStatusIntByUid(@RequestParam String uid) {
+
+        Integer status = driverService.getDriverStatusIntByUid(uid);
+
+        return new ResponseEntity<>(status, HttpStatus.OK);
+    }
+
     @PostMapping("/auth/register")
     public ResponseEntity<ResponseDriverId> registerDriverInfo(@RequestHeader("Authorization") String bearerToken,
                                                                @Valid @RequestBody RequestRegistryInfo requestRegistryInfo) throws ExecutionException, InterruptedException {
@@ -44,15 +61,6 @@ public class DriverController {
         return new ResponseEntity<>(responseCustomerId, HttpStatus.CREATED);
     }
 
-    @PostMapping("")
-    public ResponseEntity<String> saveDriver(@RequestHeader("Authorization") String bearerToken,
-                                             @RequestBody DriverDto driverDto) throws ExecutionException, InterruptedException {
-
-        String response = driverService.saveDriver(bearerToken, driverDto);
-
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
     @GetMapping("/document/{driverId}")
     public  ResponseEntity<DocumentRef> getDocumentById(@RequestHeader("Authorization") String bearerToken,
                                                         @PathVariable("driverId") String driverId) {
@@ -60,6 +68,15 @@ public class DriverController {
         DocumentRef documentRef = driverService.getDocumentById(bearerToken, driverId);
 
         return new ResponseEntity<>(documentRef, HttpStatus.OK);
+    }
+
+    @GetMapping("/{driverId}/getName")
+    public ResponseEntity<String> getNameByDriverId(@RequestHeader("Authorization") String bearerToken,
+                                                      @PathVariable("driverId") String driverId) {
+
+        String fullName = driverService.getNameByDriverId(bearerToken, driverId);
+
+        return new ResponseEntity<>(fullName, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -98,23 +115,34 @@ public class DriverController {
     }
 
     @PostMapping("/check-in")
-    public ResponseEntity<ResponseCheckInOut> checkIn(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseStatus> checkIn(@RequestHeader("Authorization") String bearerToken,
                                                       @Valid @RequestBody RequestCheckIn requestCheckIn) {
 
-        ResponseCheckInOut responseCheckIn = driverService.checkIn(bearerToken, requestCheckIn);
+        ResponseStatus responseStatus = driverService.checkIn(bearerToken, requestCheckIn);
 
-        return new ResponseEntity<>(responseCheckIn, HttpStatus.CREATED);
+        return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
     }
 
     @PostMapping("/check-out")
-    public ResponseEntity<ResponseCheckInOut> checkOut(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseStatus> checkOut(@RequestHeader("Authorization") String bearerToken,
                                                       @Valid @RequestBody RequestCheckOut requestCheckOut) {
 
-        ResponseCheckInOut responseCheckOut;
+        ResponseStatus responseStatus;
 
-        responseCheckOut = driverService.checkOut(bearerToken, requestCheckOut);
+        responseStatus = driverService.checkOut(bearerToken, requestCheckOut);
 
-        return new ResponseEntity<>(responseCheckOut, HttpStatus.CREATED);
+        return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+
+    }
+
+    @PutMapping("/{driverId}")
+    public ResponseEntity<ResponseStatus> updateDriverStatus(@RequestHeader("Authorization") String bearerToken,
+                                                             @PathVariable("driverId") String driverId,
+                                                             @RequestParam int status) {
+
+        ResponseStatus responseStatus = driverService.updateDriverStatus(bearerToken, driverId, status);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
 
     }
 

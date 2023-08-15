@@ -69,6 +69,10 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public DocumentRef getDocumentById(String bearerToken, String driverId) {
 
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
         DocumentReference documentReference = collectionRefDrvier.document(driverId);
 
         DocumentRef documentRef = DocumentRef.builder()
@@ -76,6 +80,35 @@ public class DriverServiceImpl implements DriverService {
                 .build();
 
         return documentRef;
+    }
+
+    @Override
+    public String getNameByDriverId(String bearerToken, String driverId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String fullName;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                fullName = document.getString("fullName");
+            }
+            else {
+                throw new ResourceNotFoundException("Driver", "DriverId", driverId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return fullName;
     }
 
     @Override
@@ -130,6 +163,63 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
+    public String getUidByDriverId(String bearerToken, String driverId) {
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String uid = "";
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Driver driver = document.toObject(Driver.class);
+
+                if (driver != null) {
+                   uid = driver.getUid();
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "DriverId", driverId);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return uid;
+    }
+
+    @Override
+    public Integer getDriverStatusIntByUid(String uid) {
+
+        Query query = collectionRefDrvier.whereEqualTo("uid", uid);
+
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        Integer status = null;
+
+        try {
+            QuerySnapshot querySnapshot = querySnapshotFuture.get();
+
+            if (!querySnapshot.isEmpty()) {
+                QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+
+                Driver driver = queryDocumentSnapshot.toObject(Driver.class);
+
+                status = driver.getDriverStatus();
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return status;
+    }
+
+    @Override
     public String registerInfo(String bearerToken, RequestRegistryInfo requestRegistryInfo) {
 
         String idToken = bearerToken.substring(7);
@@ -163,7 +253,7 @@ public class DriverServiceImpl implements DriverService {
                         .phoneNumber(requestRegistryInfo.getPhoneNumber())
                         .avatar("")
                         .vehicleId(null)
-                        .isWorking(false)
+                        .driverStatus(1)
                         .build();
 
                 DocumentReference documentReference = collectionRefDrvier.document();
@@ -180,28 +270,6 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return driverId;
-    }
-
-    @Override
-    public String saveDriver(String bearerToken, DriverDto driverDto) {
-
-        String idToken = bearerToken.substring(7);
-
-        FirebaseToken decodedToken = decodeToken(idToken);
-
-
-        Driver driver = modelMapper.map(driverDto, Driver.class);
-
-        ApiFuture<WriteResult> collectionApiFuture = collectionRefDrvier.document().set(driver);
-
-        String timestamp = null;
-        try {
-            timestamp = collectionApiFuture.get().getUpdateTime().toString();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
-        return timestamp;
     }
 
     @Override
@@ -319,7 +387,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public ResponseCheckInOut checkIn(String bearerToken, RequestCheckIn requestCheckIn) {
+    public ResponseStatus checkIn(String bearerToken, RequestCheckIn requestCheckIn) {
 
         String idToken = bearerToken.substring(7);
 
@@ -337,7 +405,7 @@ public class DriverServiceImpl implements DriverService {
             document = future.get();
 
             if (document.exists()) {
-                if (Objects.equals(document.get("isWorking"), false)) {
+                if (Objects.equals(document.get("driverStatus"), 1)) { // 1: OFFLINE
 
                     Attendance attendance = Attendance.builder()
                             .checkInAt(requestCheckIn.getCheckInAt())
@@ -347,7 +415,7 @@ public class DriverServiceImpl implements DriverService {
 
                     Driver driver = document.toObject(Driver.class);
 
-                    driver.setIsWorking(true);
+                    driver.setDriverStatus(0); //0 Online
 
                     ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                             .set(driver);
@@ -365,13 +433,13 @@ public class DriverServiceImpl implements DriverService {
             throw new RuntimeException(e);
         }
 
-        ResponseCheckInOut responseCheckIn = new ResponseCheckInOut(timestamp, "Successfully");
+        ResponseStatus responseStatus = new ResponseStatus(timestamp, "Successfully");
 
-        return responseCheckIn;
+        return responseStatus;
     }
 
     @Override
-    public ResponseCheckInOut checkOut(String bearerToken, RequestCheckOut requestCheckOut) {
+    public ResponseStatus checkOut(String bearerToken, RequestCheckOut requestCheckOut) {
 
         String idToken = bearerToken.substring(7);
 
@@ -386,7 +454,7 @@ public class DriverServiceImpl implements DriverService {
                 .orderBy("checkInAt", Query.Direction.DESCENDING)
                 .limit(1);
 
-        ResponseCheckInOut responseCheckOut;
+        ResponseStatus responseStatus;
 
         try {
             // Set checkOutAt
@@ -406,17 +474,16 @@ public class DriverServiceImpl implements DriverService {
 
                 Date timestamp = collectionApiFuture.get().getUpdateTime().toDate();
 
-                // Set isWorking = false
                 DocumentSnapshot document = future.get();
 
                 Driver driver = document.toObject(Driver.class);
 
-                driver.setIsWorking(false);
+                driver.setDriverStatus(1);
 
                 ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                         .set(driver);
                 log.info("Test4");
-                responseCheckOut = new ResponseCheckInOut(timestamp, "Successfully");
+                responseStatus = new ResponseStatus(timestamp, "Successfully");
             }
             else {
                 throw new CheckOutException(HttpStatus.INTERNAL_SERVER_ERROR, "Driver has checked out");
@@ -426,7 +493,38 @@ public class DriverServiceImpl implements DriverService {
             throw new RuntimeException(e);
         }
 
-        return responseCheckOut;
+        return responseStatus;
+    }
+
+    @Override
+    public ResponseStatus updateDriverStatus(String bearerToken, String driverId, int status) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefDrvier.document(driverId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+
+                Driver driver = document.toObject(Driver.class);
+
+                if (driver != null) {
+                    driver.setDriverStatus(status); //0 Online
+
+                    collectionRefDrvier.document(driverId).set(driver);;
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ResponseStatus(new Date(), "Successfully");
     }
 
     @Override
@@ -487,6 +585,7 @@ public class DriverServiceImpl implements DriverService {
 
         FcmToken savedFcmToken = FcmToken.builder()
                 .fcmToken(fcmToken)
+                .isDriver(true)
                 .uid(uid)
                 .build();
 
@@ -510,7 +609,7 @@ public class DriverServiceImpl implements DriverService {
 
         ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(bearerToken, requestReceivedDriverRefInfo);
 
-        sendNotification(bearerToken, requestReceivedDriverInfo.getDriverId(), responseStatus.getMessage());
+        //sendNotification(bearerToken, requestReceivedDriverInfo.getDriverId(), responseStatus.getMessage());
 
         return responseStatus;
     }
@@ -569,8 +668,6 @@ public class DriverServiceImpl implements DriverService {
                                 .build();
 
                         ResponseStatus rsNotify = bookingServiceClient.sendNotificationToDesignatedDriver(bearerToken, requestUidAndNotification);
-
-                        ResponseStatus rsRemoveAllGPS = bookingServiceClient.removeAllGPS(bearerToken);
                     }
                 }
                 else {

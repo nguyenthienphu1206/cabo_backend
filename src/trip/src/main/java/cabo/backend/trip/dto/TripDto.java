@@ -1,11 +1,6 @@
 package cabo.backend.trip.dto;
 
-import cabo.backend.trip.deserializer.DocumentReferenceDeserializer;
-import cabo.backend.trip.serializer.DocumentReferenceSerializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.GeoPoint;
+import cabo.backend.trip.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,23 +14,27 @@ public class TripDto {
 
     private long cost;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference customerId;
+    private String customerName;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference driverId;
+    private String driverName;
 
     private double distance;
 
     private long startTime;
 
+    private long pickUpTime;
+
     private long endTime;
 
-    private GeoPoint fromLocation;
+    private GeoPoint customerOrderLocation;
+
+    private GeoPoint driverStartLocation;
 
     private GeoPoint toLocation;
 
     private int paymentType;
+
+    private String status;
+
+    private long updatedAt;
 }

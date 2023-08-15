@@ -13,5 +13,7 @@ public class FcmToken {
 
     private String fcmToken;
 
+    private Boolean isDriver;
+
     private String uid;
 }
