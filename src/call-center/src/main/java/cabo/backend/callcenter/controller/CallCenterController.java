@@ -2,12 +2,14 @@ package cabo.backend.callcenter.controller;
 
 import cabo.backend.callcenter.dto.RequestBookADrive;
 import cabo.backend.callcenter.dto.ResponseStatus;
+import cabo.backend.callcenter.dto.TripDto;
 import cabo.backend.callcenter.service.CallCenterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/call-center")
@@ -53,5 +55,13 @@ public class CallCenterController {
 
             return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/trip")
+    public ResponseEntity<List<TripDto>> getAllTrips(@RequestHeader("Authorization") String bearerToken) {
+
+        List<TripDto> tripDtos = callCenterService.getAllTrips(bearerToken);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 }

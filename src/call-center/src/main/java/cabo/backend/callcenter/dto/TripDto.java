@@ -1,6 +1,6 @@
-package cabo.backend.trip.dto;
+package cabo.backend.callcenter.dto;
 
-import cabo.backend.trip.entity.GeoPoint;
+import cabo.backend.callcenter.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

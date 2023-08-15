@@ -582,14 +582,24 @@ public class TripServiceImpl implements TripService {
                 .startTime(trip.getStartTime())
                 .pickUpTime(trip.getPickUpTime())
                 .endTime(trip.getEndTime())
-                .customerOrderLocation(trip.getCustomerOrderLocation())
-                .driverStartLocation(trip.getDriverStartLocation())
-                .toLocation(trip.getToLocation())
+                .customerOrderLocation(convertToGeoPointEntity(trip.getCustomerOrderLocation()))
+                .driverStartLocation(convertToGeoPointEntity(trip.getDriverStartLocation()))
+                .toLocation(convertToGeoPointEntity(trip.getToLocation()))
                 .paymentType(trip.getPaymentType())
                 .status(trip.getStatus())
                 .updatedAt(trip.getUpdatedAt())
                 .build();
 
         return tripDto;
+    }
+
+    private cabo.backend.trip.entity.GeoPoint convertToGeoPointEntity(GeoPoint geoPointFirestore) {
+
+        cabo.backend.trip.entity.GeoPoint geoPoint = new cabo.backend.trip.entity.GeoPoint();
+
+        geoPoint.setLatitude(geoPointFirestore.getLatitude());
+        geoPoint.setLongitude(geoPointFirestore.getLongitude());
+
+        return geoPoint;
     }
 }

@@ -2,9 +2,11 @@ package cabo.backend.callcenter.service.impl;
 
 import cabo.backend.callcenter.dto.RequestBookADrive;
 import cabo.backend.callcenter.dto.ResponseStatus;
+import cabo.backend.callcenter.dto.TripDto;
 import cabo.backend.callcenter.entity.FcmToken;
 import cabo.backend.callcenter.service.CallCenterService;
 import cabo.backend.callcenter.service.ReceiverServiceClient;
+import cabo.backend.callcenter.service.TripServiceClient;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,6 +15,8 @@ import com.google.firebase.auth.FirebaseToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -25,6 +29,9 @@ public class CallCenterServiceImpl implements CallCenterService {
 
     @Autowired
     private ReceiverServiceClient receiverServiceClient;
+
+    @Autowired
+    private TripServiceClient tripServiceClient;
 
     public CallCenterServiceImpl(Firestore firestore) {
 
@@ -55,10 +62,18 @@ public class CallCenterServiceImpl implements CallCenterService {
         String idToken = bearerToken.substring(7);
 
 //        FirebaseToken decodedToken = decodeToken(idToken);
-//
-//        String uid = decodedToken.getUid();
 
         return receiverServiceClient.receiverAndBookDriverFromCallCenter(bearerToken, requestBookADrive);
+    }
+
+    @Override
+    public List<TripDto> getAllTrips(String bearerToken) {
+
+        String idToken = bearerToken.substring(7);
+
+//        FirebaseToken decodedToken = decodeToken(idToken);
+
+        return tripServiceClient.getAllTrip(bearerToken);
     }
 
     private FirebaseToken decodeToken(String idToken) {

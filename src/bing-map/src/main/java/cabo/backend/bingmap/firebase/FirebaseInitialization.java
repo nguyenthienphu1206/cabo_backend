@@ -21,7 +21,7 @@ public class FirebaseInitialization {
         FileInputStream serviceAccount = null;
 
         try {
-            serviceAccount = new FileInputStream("./bingmap/serviceAccountKey.json");
+            serviceAccount = new FileInputStream("./bing-map/serviceAccountKey.json");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
