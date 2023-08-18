@@ -112,6 +112,16 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
+    public List<TripDto> getAllTripsById(String bearerToken, String driverId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        return tripServiceClient.getTripByDriverId(bearerToken, driverId);
+    }
+
+    @Override
     public DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId) {
 
         String idToken = bearerToken.substring(7);
@@ -534,29 +544,29 @@ public class DriverServiceImpl implements DriverService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
         log.info("Test");
-        TripDto tripDto = tripServiceClient.getRecentTripFromDriver(bearerToken, driverId);
+        RecentTrip recentTrip = tripServiceClient.getRecentTripFromDriver(bearerToken, driverId);
 
         ResponseRecentTrip responseRecentTrip = null;
 
-        if (tripDto != null) {
-            String driverStartLocation = bingMapServiceClient.getAddress(tripDto.getDriverStartLocation().getLatitude(),
-                    tripDto.getDriverStartLocation().getLongitude());
+        if (recentTrip != null) {
+            String driverStartLocation = bingMapServiceClient.getAddress(recentTrip.getDriverStartLocation().getLatitude(),
+                    recentTrip.getDriverStartLocation().getLongitude());
 
-            String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
-                    tripDto.getToLocation().getLongitude());
+            String toLocation = bingMapServiceClient.getAddress(recentTrip.getToLocation().getLatitude(),
+                    recentTrip.getToLocation().getLongitude());
 
             responseRecentTrip = ResponseRecentTrip.builder()
-                    .cost(tripDto.getCost())
-                    .distance(tripDto.getDistance())
-                    .startTime(tripDto.getStartTime())
-                    .pickUpTime(tripDto.getPickUpTime())
-                    .endTime(tripDto.getEndTime())
+                    .cost(recentTrip.getCost())
+                    .distance(recentTrip.getDistance())
+                    .startTime(recentTrip.getStartTime())
+                    .pickUpTime(recentTrip.getPickUpTime())
+                    .endTime(recentTrip.getEndTime())
                     .driverStartLocation(driverStartLocation)
                     .toLocation(toLocation)
                     .build();
         }
 
-        //log.info("Test1 " + tripDto);
+        //log.info("Test1 " + recentTrip);
 
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "driver", driverId);
 

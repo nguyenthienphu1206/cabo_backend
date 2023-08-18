@@ -1,6 +1,6 @@
-package cabo.backend.driver.dto;
+package cabo.backend.customer.dto;
 
-import cabo.backend.driver.entity.GeoPoint;
+import cabo.backend.customer.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,31 +10,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TripDto {
+public class RecentTrip {
 
     private long cost;
-
-    private String customerName;
-
-    private String driverName;
 
     private double distance;
 
     private long startTime;
 
-    private long pickUpTime;
-
     private long endTime;
 
     private GeoPoint customerOrderLocation;
 
-    private GeoPoint driverStartLocation;
-
     private GeoPoint toLocation;
 
     private int paymentType;
-
-    private String status;
-
-    private long updatedAt;
 }

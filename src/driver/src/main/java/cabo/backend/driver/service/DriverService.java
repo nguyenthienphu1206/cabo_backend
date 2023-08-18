@@ -2,11 +2,15 @@ package cabo.backend.driver.service;
 
 import cabo.backend.driver.dto.*;
 
+import java.util.List;
+
 public interface DriverService {
 
     DocumentRef getDocumentById(String bearerToken, String driverId);
 
     String getNameByDriverId(String bearerToken, String driverId);
+
+    List<TripDto> getAllTripsById(String bearerToken, String driverId);
 
     DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId);
 

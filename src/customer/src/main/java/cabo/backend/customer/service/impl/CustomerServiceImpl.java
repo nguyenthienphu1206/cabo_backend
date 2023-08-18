@@ -92,6 +92,16 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public List<TripDto> getAllTripById(String bearerToken, String customerId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        return tripServiceClient.getTripByCustomerId(bearerToken, customerId);
+    }
+
+    @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
 
         String idToken = bearerToken.substring(7);
@@ -281,31 +291,31 @@ public class CustomerServiceImpl implements CustomerService {
 
         //FirebaseToken decodedToken = decodeToken(idToken);
         //log.info("Test");
-        TripDto tripDto = tripServiceClient.getRecentTripFromCustomer(bearerToken, customerId);
+        RecentTrip recentTrip = tripServiceClient.getRecentTripFromCustomer(bearerToken, customerId);
 
         ResponseRecentTrip responseRecentTrip = null;
 
-        if (tripDto != null) {
-            String customerOrderLocation = bingMapServiceClient.getAddress(tripDto.getCustomerOrderLocation().getLatitude(),
-                    tripDto.getCustomerOrderLocation().getLongitude());
+        if (recentTrip != null) {
+            String customerOrderLocation = bingMapServiceClient.getAddress(recentTrip.getCustomerOrderLocation().getLatitude(),
+                    recentTrip.getCustomerOrderLocation().getLongitude());
 
-            String toLocation = bingMapServiceClient.getAddress(tripDto.getToLocation().getLatitude(),
-                    tripDto.getToLocation().getLongitude());
+            String toLocation = bingMapServiceClient.getAddress(recentTrip.getToLocation().getLatitude(),
+                    recentTrip.getToLocation().getLongitude());
 
             responseRecentTrip = ResponseRecentTrip.builder()
-                    .cost(tripDto.getCost())
-                    .distance(tripDto.getDistance())
-                    .startTime(tripDto.getStartTime())
-                    .endTime(tripDto.getEndTime())
+                    .cost(recentTrip.getCost())
+                    .distance(recentTrip.getDistance())
+                    .startTime(recentTrip.getStartTime())
+                    .endTime(recentTrip.getEndTime())
                     .customerOrderLocation(customerOrderLocation)
                     .toLocation(toLocation)
-                    .paymentType(tripDto.getPaymentType())
+                    .paymentType(recentTrip.getPaymentType())
                     .build();
         }
 
 
 
-        //log.info("Test1 " + tripDto);
+        //log.info("Test1 " + recentTrip);
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "customer", customerId);
 
         //log.info("Test2 " + responseTotalTrip);

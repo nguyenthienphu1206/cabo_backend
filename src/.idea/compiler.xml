@@ -13,12 +13,14 @@
         <module name="driver" />
         <module name="bing-map" />
         <module name="receiver-service" />
+        <module name="api-gateway" />
         <module name="call-center" />
         <module name="customer" />
         <module name="vehicle" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="api-gateway" target="11" />
       <module name="bing-map" target="11" />
       <module name="booking" target="11" />
       <module name="call-center" target="11" />
@@ -43,6 +45,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="api-gateway" options="-parameters" />
       <module name="bing-map" options="-parameters" />
       <module name="booking" options="-parameters" />
       <module name="call-center" options="-parameters" />

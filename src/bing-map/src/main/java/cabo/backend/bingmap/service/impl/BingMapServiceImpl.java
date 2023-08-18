@@ -213,7 +213,7 @@ public class BingMapServiceImpl implements BingMapService {
         return address;
     }
 
-    private  List<ResponseListAddresses> getListAddressFromDB(String query) {
+    private List<ResponseListAddresses> getListAddressFromDB(String query) {
 
         // Xử lí bỏ "Đường/đường"
         query = processAddress(query);

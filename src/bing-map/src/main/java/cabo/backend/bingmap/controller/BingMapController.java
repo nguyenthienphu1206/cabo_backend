@@ -34,7 +34,6 @@ public class BingMapController {
     }
 
     @GetMapping("/bing-map/get-list-places")
-
     public ResponseEntity<List<ResponseListAddresses>> getRealPlacesBySearchQuery(@RequestParam String searchLocation) {
 
         return new ResponseEntity<>(bingMapService.getRealPlacesBySearchQuery(searchLocation), HttpStatus.OK);

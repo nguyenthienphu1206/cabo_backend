@@ -8,15 +8,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class TripDto {
-
+@AllArgsConstructor
+public class RecentTrip {
     private long cost;
-
-    private String customerName;
-
-    private String driverName;
 
     private double distance;
 
@@ -26,15 +21,7 @@ public class TripDto {
 
     private long endTime;
 
-    private GeoPoint customerOrderLocation;
-
     private GeoPoint driverStartLocation;
 
     private GeoPoint toLocation;
-
-    private int paymentType;
-
-    private String status;
-
-    private long updatedAt;
 }

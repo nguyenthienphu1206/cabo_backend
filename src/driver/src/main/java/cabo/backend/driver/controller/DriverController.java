@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -31,6 +32,15 @@ public class DriverController {
         DriverInfo driverInfo = driverService.getDriverInfoByDriverIdAndTripId(bearerToken, driverId, tripId);
 
         return new ResponseEntity<>(driverInfo, HttpStatus.OK);
+    }
+
+    @GetMapping("/{driverId}/trip")
+    public ResponseEntity<List<TripDto>> getAllTripsById(@RequestHeader("Authorization") String bearerToken,
+                                                         @PathVariable("driverId") String driverId) {
+
+        List<TripDto> tripDtos = driverService.getAllTripsById(bearerToken, driverId);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 
     @GetMapping("/{driverId}/get-uid")
