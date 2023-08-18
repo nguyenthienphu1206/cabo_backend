@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -78,6 +79,15 @@ public class CustomerController {
         CustomerDto customerDto = customerService.getCustomerDetails(bearerToken, customerId);
 
         return new ResponseEntity<>(customerDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/{customerId}/trip")
+    public ResponseEntity<List<TripDto>> getAllTripById(@RequestHeader("Authorization") String bearerToken,
+                                                        @PathVariable("customerId") String customerId) {
+
+        List<TripDto> tripDtos = customerService.getAllTripById(bearerToken, customerId);
+
+        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 
     @PostMapping("/check-phone-existence")

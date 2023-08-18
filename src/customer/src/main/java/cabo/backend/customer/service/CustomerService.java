@@ -2,11 +2,15 @@ package cabo.backend.customer.service;
 
 import cabo.backend.customer.dto.*;
 
+import java.util.List;
+
 public interface CustomerService {
 
     DocumentRef getDocumentById(String bearerToken, String customerId);
 
     String getNameByCustomerId(String bearerToken, String customerId);
+
+    List<TripDto> getAllTripById(String bearerToken, String customerId);
 
     String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
