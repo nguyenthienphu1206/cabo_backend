@@ -38,7 +38,6 @@ public class BingMapController {
     }
 
     @GetMapping("/bing-map/address/location")
-
     public ResponseEntity<List<ResponseListAddresses>> getAddressByQuery(@RequestParam String query) {
 
         return new ResponseEntity<>(bingMapService.getAddressByQuery(query), HttpStatus.OK);
