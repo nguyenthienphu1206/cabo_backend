@@ -21,8 +21,4 @@ public interface TripServiceClient {
     ResponseTotalTrip getTotalTrip(@RequestHeader("Authorization") String bearerToken,
                                    @PathVariable("user") String userType,
                                    @PathVariable("id") String id);
-
-    @GetMapping("/api/v1/trip/customer/{customerId}")
-    List<TripDto> getTripByCustomerId(@RequestHeader("Authorization") String bearerToken,
-                                      @PathVariable("customerId") String customerId);
 }

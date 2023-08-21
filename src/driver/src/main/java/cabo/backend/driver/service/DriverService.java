@@ -14,9 +14,7 @@ public interface DriverService {
 
     DriverInfo getDriverInfoByDriverIdAndTripId(String bearerToken, String driverId, String tripId);
 
-    String getUidByDriverId(String bearerToken, String driverId);
-
-    Integer getDriverStatusIntByUid(String uid);
+    String getDriverStatusIntByUid(String uid);
 
     String registerInfo(String idToken, RequestRegistryInfo requestRegistryInfo);
 
@@ -30,7 +28,7 @@ public interface DriverService {
 
     ResponseStatus checkOut(String bearerToken, RequestCheckOut requestCheckOut);
 
-    ResponseStatus updateDriverStatus(String bearerToken, String driverId, int status);
+    ResponseStatus updateDriverStatus(String bearerToken, String driverId, String status);
 
     ResponseOverview getOverview(String idToken, String driverId);
 

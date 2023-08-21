@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/call-center")
+@CrossOrigin(origins = "*")
 public class CallCenterController {
 
     private CallCenterService callCenterService;

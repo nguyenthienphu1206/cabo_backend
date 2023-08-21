@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/driver")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000")
 public class DriverController {
 
     private DriverService driverService;
@@ -43,19 +44,10 @@ public class DriverController {
         return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 
-    @GetMapping("/{driverId}/get-uid")
-    public ResponseEntity<String> getUidByDriverId(@RequestHeader("Authorization") String bearerToken,
-                                                   @PathVariable("driverId") String driverId) {
-
-        String uid = driverService.getUidByDriverId(bearerToken, driverId);
-
-        return new ResponseEntity<>(uid, HttpStatus.OK);
-    }
-
     @GetMapping("/get-driver-status")
-    public ResponseEntity<Integer> getDriverStatusIntByUid(@RequestParam String uid) {
+    public ResponseEntity<String> getDriverStatusIntByUid(@RequestParam String uid) {
 
-        Integer status = driverService.getDriverStatusIntByUid(uid);
+        String status = driverService.getDriverStatusIntByUid(uid);
 
         return new ResponseEntity<>(status, HttpStatus.OK);
     }
@@ -148,7 +140,7 @@ public class DriverController {
     @PutMapping("/{driverId}")
     public ResponseEntity<ResponseStatus> updateDriverStatus(@RequestHeader("Authorization") String bearerToken,
                                                              @PathVariable("driverId") String driverId,
-                                                             @RequestParam int status) {
+                                                             @RequestParam String status) {
 
         ResponseStatus responseStatus = driverService.updateDriverStatus(bearerToken, driverId, status);
 
@@ -166,21 +158,21 @@ public class DriverController {
     }
 
     @GetMapping("/notification/subscribe/{fcmToken}")
-    public ResponseEntity<ResponseSubscribeNotification> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseStatus> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
                                                                                @PathVariable("fcmToken") String fcmToken) {
 
-        ResponseSubscribeNotification responseSubscribeNotification;
+        ResponseStatus responseStatus;
 
         try {
             driverService.subscribeNotification(bearerToken, fcmToken);
 
-            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), "Successfully");
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
 
-            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.OK);
+            return new ResponseEntity<>(responseStatus, HttpStatus.OK);
         } catch (Exception ex) {
-            responseSubscribeNotification = new ResponseSubscribeNotification(new Date(), ex.getMessage());
+            responseStatus = new ResponseStatus(new Date(), ex.getMessage());
 
-            return new ResponseEntity<>(responseSubscribeNotification, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

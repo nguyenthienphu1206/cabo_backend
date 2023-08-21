@@ -1,6 +1,7 @@
 package cabo.backend.customer.controller;
 
 import cabo.backend.customer.dto.*;
+import cabo.backend.customer.dto.ResponseStatus;
 import cabo.backend.customer.service.CustomerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/customer")
 @Slf4j
+@CrossOrigin(origins = "*")
 public class CustomerController {
 
     private CustomerService customerService;
@@ -36,7 +38,7 @@ public class CustomerController {
 
     @PostMapping("/call-center/register")
     public ResponseEntity<String> createCustomerIfPhoneNumberNotRegistered(@RequestHeader("Authorization") String bearerToken,
-                                                                           @PathVariable("phoneNumber") String phoneNumber) {
+                                                                           @RequestParam String phoneNumber) {
 
         String customerId = customerService.createCustomerIfPhoneNumberNotRegistered(bearerToken, phoneNumber);
 
@@ -79,15 +81,6 @@ public class CustomerController {
         CustomerDto customerDto = customerService.getCustomerDetails(bearerToken, customerId);
 
         return new ResponseEntity<>(customerDto, HttpStatus.OK);
-    }
-
-    @GetMapping("/{customerId}/trip")
-    public ResponseEntity<List<TripDto>> getAllTripById(@RequestHeader("Authorization") String bearerToken,
-                                                        @PathVariable("customerId") String customerId) {
-
-        List<TripDto> tripDtos = customerService.getAllTripById(bearerToken, customerId);
-
-        return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
 
     @PostMapping("/check-phone-existence")
@@ -137,5 +130,24 @@ public class CustomerController {
         ResponseDriverInformation responseDriverInformation = customerService.bookADrive(bearerToken, customerId, requestBookADrive);
 
         return new ResponseEntity<>(responseDriverInformation, HttpStatus.OK);
+    }
+
+    @GetMapping("/notification/subscribe/{fcmToken}")
+    public ResponseEntity<ResponseStatus> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
+                                                                @PathVariable("fcmToken") String fcmToken) {
+
+        ResponseStatus responseStatus;
+
+        try {
+            customerService.subscribeNotification(bearerToken, fcmToken);
+
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+        } catch (Exception ex) {
+            responseStatus = new ResponseStatus(new Date(), ex.getMessage());
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

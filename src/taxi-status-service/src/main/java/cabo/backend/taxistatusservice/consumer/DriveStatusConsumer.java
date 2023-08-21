@@ -28,6 +28,8 @@ public class DriveStatusConsumer {
 
         String bearerToken = driveStatus.getBearerToken();
 
+        log.info("Status");
+
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
@@ -45,7 +47,9 @@ public class DriveStatusConsumer {
         Map<String, String> data = createDataFromTrip(tripDto, driveStatus.getTripId());
 
         // Gửi notification về phía tổng đài
-        sendNotification(notificationDto, driveStatus.getFcmToken(), data);
+        if (!driveStatus.getFcmToken().equals("")) {
+            sendNotification(notificationDto, driveStatus.getFcmToken(), data);
+        }
     }
 
     private FirebaseToken decodeToken(String idToken) {

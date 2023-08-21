@@ -1,4 +1,4 @@
-package cabo.backend.driver.entity;
+package cabo.backend.customer.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

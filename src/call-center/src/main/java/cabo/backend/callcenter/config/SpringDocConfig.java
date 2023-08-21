@@ -32,7 +32,7 @@ public class SpringDocConfig implements WebMvcConfigurer {
         return GroupedOpenApi.builder()
                 .addOpenApiCustomiser(openApi -> openApi.info(bookingOpenAPI().getInfo()))
                 .group("Call-center")
-                .packagesToScan("cabo.backend.call-center.controller")
+                .pathsToMatch("/api/v1/call-center/**")
                 .build();
     }
 }
