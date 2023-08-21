@@ -15,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000")
 public class TripController {
 
     private TripService tripService;
@@ -132,6 +133,24 @@ public class TripController {
         ResponseStatus responseStatus = tripService.sendReceivedDriverInfo(bearerToken, requestReceivedDriverInfo);
 
         return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/trip/confirm-pickup-location")
+    public ResponseEntity<ResponseStatus> confirmPickupLocationArrival(@RequestHeader("Authorization") String bearerToken,
+                                                                       @RequestBody PickUpAndCompletionLocation pickUpLocation) {
+
+        ResponseStatus responseStatus = tripService.confirmPickupLocationArrival(bearerToken, pickUpLocation);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+    }
+
+    @PostMapping("/trip/confirm-completed-location")
+    public ResponseEntity<ResponseStatus> confirmDriverTripCompletion(@RequestHeader("Authorization") String bearerToken,
+                                                                      @RequestBody PickUpAndCompletionLocation completionLocation) {
+
+        ResponseStatus responseStatus = tripService.confirmDriverTripCompletion(bearerToken, completionLocation);
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
     @PutMapping("/trip/{tripId}")

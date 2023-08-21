@@ -9,6 +9,7 @@ import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.exception.ResourceNotFoundException;
 import cabo.backend.driver.service.*;
+import cabo.backend.driver.utils.AppConstants;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
@@ -173,43 +174,13 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public String getUidByDriverId(String bearerToken, String driverId) {
-
-        DocumentReference documentReference = collectionRefDrvier.document(driverId);
-
-        ApiFuture<DocumentSnapshot> future = documentReference.get();
-
-        String uid = "";
-
-        try {
-            DocumentSnapshot document = future.get();
-
-            if (document.exists()) {
-                Driver driver = document.toObject(Driver.class);
-
-                if (driver != null) {
-                   uid = driver.getUid();
-                }
-            }
-            else {
-                throw new ResourceNotFoundException("Document", "DriverId", driverId);
-            }
-
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
-        return uid;
-    }
-
-    @Override
-    public Integer getDriverStatusIntByUid(String uid) {
+    public String getDriverStatusIntByUid(String uid) {
 
         Query query = collectionRefDrvier.whereEqualTo("uid", uid);
 
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
-        Integer status = null;
+        String status = null;
 
         try {
             QuerySnapshot querySnapshot = querySnapshotFuture.get();
@@ -263,7 +234,7 @@ public class DriverServiceImpl implements DriverService {
                         .phoneNumber(requestRegistryInfo.getPhoneNumber())
                         .avatar("")
                         .vehicleId(null)
-                        .driverStatus(1)
+                        .driverStatus(AppConstants.StatusDriver.OFFLINE.name())
                         .build();
 
                 DocumentReference documentReference = collectionRefDrvier.document();
@@ -425,7 +396,7 @@ public class DriverServiceImpl implements DriverService {
 
                     Driver driver = document.toObject(Driver.class);
 
-                    driver.setDriverStatus(0); //0 Online
+                    driver.setDriverStatus(AppConstants.StatusDriver.ONLINE.name());
 
                     ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                             .set(driver);
@@ -488,7 +459,7 @@ public class DriverServiceImpl implements DriverService {
 
                 Driver driver = document.toObject(Driver.class);
 
-                driver.setDriverStatus(1);
+                driver.setDriverStatus(AppConstants.StatusDriver.OFFLINE.name());
 
                 ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                         .set(driver);
@@ -507,7 +478,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public ResponseStatus updateDriverStatus(String bearerToken, String driverId, int status) {
+    public ResponseStatus updateDriverStatus(String bearerToken, String driverId, String status) {
 
         String idToken = bearerToken.substring(7);
 
@@ -525,9 +496,12 @@ public class DriverServiceImpl implements DriverService {
                 Driver driver = document.toObject(Driver.class);
 
                 if (driver != null) {
-                    driver.setDriverStatus(status); //0 Online
 
-                    collectionRefDrvier.document(driverId).set(driver);;
+                    AppConstants.StatusDriver statusDriver = AppConstants.StatusDriver.valueOf(status);
+
+                    driver.setDriverStatus(statusDriver.name());
+
+                    collectionRefDrvier.document(driverId).set(driver);
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -595,7 +569,7 @@ public class DriverServiceImpl implements DriverService {
 
         FcmToken savedFcmToken = FcmToken.builder()
                 .fcmToken(fcmToken)
-                .isDriver(true)
+                .fcmClient("DRIVER")
                 .uid(uid)
                 .build();
 

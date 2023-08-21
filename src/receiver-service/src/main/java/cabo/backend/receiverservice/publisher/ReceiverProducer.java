@@ -37,6 +37,7 @@ public class ReceiverProducer {
     public void sendInforToBookingQueue(String bearerToken, RequestBookADrive requestBookADrive) {
 
         String customerId = customerServiceClient.createCustomerIfPhoneNumberNotRegistered(bearerToken, requestBookADrive.getCustomerPhoneNumber());
+        log.info("customerId: " + customerId);
 
         RequestBookADriveEvent requestBookADriveEvent = RequestBookADriveEvent.builder()
                 .bearerToken(bearerToken)

@@ -3,6 +3,7 @@ package cabo.backend.trip.service.impl;
 import cabo.backend.trip.dto.*;
 import cabo.backend.trip.entity.Trip;
 import cabo.backend.trip.exception.ResourceNotFoundException;
+import cabo.backend.trip.service.BingMapServiceClient;
 import cabo.backend.trip.service.CustomerServiceClient;
 import cabo.backend.trip.service.DriverServiceClient;
 import cabo.backend.trip.service.TripService;
@@ -31,6 +32,9 @@ public class TripServiceImpl implements TripService {
 
     @Autowired
     private DriverServiceClient driverServiceClient;
+
+    @Autowired
+    private BingMapServiceClient bingMapServiceClient;
 
     private static final String COLLECTION_NAME_TRIP = "trips";
 
@@ -481,6 +485,112 @@ public class TripServiceImpl implements TripService {
         }
 
         return new ResponseStatus(new Date(), "Failed");
+    }
+
+    @Override
+    public ResponseStatus confirmPickupLocationArrival(String bearerToken, PickUpAndCompletionLocation pickUpLocation) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(pickUpLocation.getTripId());
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        ResponseStatus responseStatus = new ResponseStatus();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+                    GeoPoint customerOrderLocation = trip.getCustomerOrderLocation();
+
+                    Double distance = bingMapServiceClient.calculateDistance(pickUpLocation.getCurrentLocation().getLatitude(),
+                            pickUpLocation.getCurrentLocation().getLongitude(),
+                            customerOrderLocation.getLatitude(),
+                            customerOrderLocation.getLongitude());
+
+                    if (distance > 0.1) {
+                        responseStatus.setTimestamp(new Date());
+                        responseStatus.setMessage("Failed, too far from pick up location");
+                    }
+                    else {
+                        trip.setPickUpTime(Instant.now().getEpochSecond());
+                        trip.setStatus(AppConstants.StatusTrip.TRIP_STATUS_INPROGRESS.name());
+                        trip.setUpdatedAt(Instant.now().getEpochSecond());
+                        documentReference.set(trip);
+
+                        responseStatus.setTimestamp(new Date());
+                        responseStatus.setMessage("Successful");
+                    }
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Trip", "tripId", pickUpLocation.getTripId());
+            }
+
+        } catch (InterruptedException | ExecutionException | IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+
+        return responseStatus;
+    }
+
+    @Override
+    public ResponseStatus confirmDriverTripCompletion(String bearerToken, PickUpAndCompletionLocation completionLocation) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefTrip.document(completionLocation.getTripId());
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        ResponseStatus responseStatus = new ResponseStatus();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                Trip trip = document.toObject(Trip.class);
+
+                if (trip != null) {
+                    GeoPoint customerOrderLocation = trip.getCustomerOrderLocation();
+
+                    Double distance = bingMapServiceClient.calculateDistance(completionLocation.getCurrentLocation().getLatitude(),
+                            completionLocation.getCurrentLocation().getLongitude(),
+                            customerOrderLocation.getLatitude(),
+                            customerOrderLocation.getLongitude());
+
+                    if (distance > 0.05) {
+                        responseStatus.setTimestamp(new Date());
+                        responseStatus.setMessage("Failed, too far from completed location");
+                    }
+                    else {
+                        trip.setPickUpTime(Instant.now().getEpochSecond());
+                        trip.setStatus(AppConstants.StatusTrip.TRIP_STATUS_DONE.name());
+                        trip.setUpdatedAt(Instant.now().getEpochSecond());
+                        documentReference.set(trip);
+
+                        responseStatus.setTimestamp(new Date());
+                        responseStatus.setMessage("Successful");
+                    }
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Trip", "tripId", completionLocation.getTripId());
+            }
+
+        } catch (InterruptedException | ExecutionException | IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+
+        return responseStatus;
     }
 
     @Override

@@ -31,8 +31,8 @@ public class SpringDocConfig implements WebMvcConfigurer {
     public GroupedOpenApi driverApi() {
         return GroupedOpenApi.builder()
                 .addOpenApiCustomiser(openApi -> openApi.info(driverOpenAPI().getInfo()))
-                .group("Driver")
-                .packagesToScan("cabo.backend.driver.controller")
+                .group("driver-service")
+                .pathsToMatch("/api/v1/driver/**")
                 .build();
     }
 }

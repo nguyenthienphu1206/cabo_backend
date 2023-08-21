@@ -22,10 +22,10 @@ public interface DriverServiceClient {
                             @PathVariable("driverId") String driverId);
 
     @GetMapping("/api/v1/driver/get-driver-status")
-    Integer getDriverStatusIntByUid(@RequestParam String uid);
+    String getDriverStatusIntByUid(@RequestParam String uid);
 
     @PutMapping("/api/v1/driver/{driverId}")
     ResponseStatus updateDriverStatus(@RequestHeader("Authorization") String bearerToken,
                                       @PathVariable("driverId") String driverId,
-                                      @RequestParam int status);
+                                      @RequestParam String status);
 }

@@ -1,4 +1,4 @@
-package cabo.backend.receiverservice.service;
+package cabo.backend.trip.service;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

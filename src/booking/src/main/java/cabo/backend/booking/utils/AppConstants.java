@@ -1,6 +1,12 @@
-package cabo.backend.trip.utils;
+package cabo.backend.booking.utils;
 
 public class AppConstants {
+
+    public enum StatusDriver {
+        ONLINE,
+        OFFLINE,
+        BUSY
+    }
 
     public enum StatusTrip {
         TRIP_STATUS_SEARCHING,

@@ -2,6 +2,7 @@ package cabo.backend.customer.service.impl;
 
 import cabo.backend.customer.dto.*;
 import cabo.backend.customer.entity.Customer;
+import cabo.backend.customer.entity.FcmToken;
 import cabo.backend.customer.exception.ResourceNotFoundException;
 import cabo.backend.customer.service.BingMapServiceClient;
 import cabo.backend.customer.service.BookingServiceClient;
@@ -34,15 +35,16 @@ public class CustomerServiceImpl implements CustomerService {
 
     private static final String COLLECTION_NAME_CUSTOMER = "customers";
 
-    private final CollectionReference collectionRefCustomer;
+    private static final String COLLECTION_NAME_FCMTOKEN = "fcmTokens";
 
-    private Firestore dbFirestore;
+    private final CollectionReference collectionRefFcmToken;
+
+    private final CollectionReference collectionRefCustomer;
 
     public CustomerServiceImpl(Firestore dbFirestore) {
 
-        this.dbFirestore = dbFirestore;
-
         this.collectionRefCustomer = dbFirestore.collection(COLLECTION_NAME_CUSTOMER);
+        this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
     }
 
 
@@ -89,16 +91,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return fullName;
-    }
-
-    @Override
-    public List<TripDto> getAllTripById(String bearerToken, String customerId) {
-
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        return tripServiceClient.getTripByCustomerId(bearerToken, customerId);
     }
 
     @Override
@@ -363,6 +355,24 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return responseDriverInformation;
+    }
+
+    @Override
+    public void subscribeNotification(String bearerToken, String fcmToken) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
+        String uid = decodedToken.getUid();
+
+        FcmToken savedFcmToken = FcmToken.builder()
+                .fcmToken(fcmToken)
+                .fcmClient("CUSTOMER")
+                .uid(uid)
+                .build();
+
+        collectionRefFcmToken.document().set(savedFcmToken);
     }
 
     private FirebaseToken decodeToken(String idToken) {

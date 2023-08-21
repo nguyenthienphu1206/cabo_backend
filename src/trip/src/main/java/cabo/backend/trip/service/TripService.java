@@ -1,7 +1,6 @@
 package cabo.backend.trip.service;
 
 import cabo.backend.trip.dto.*;
-import cabo.backend.trip.entity.Trip;
 import com.google.cloud.firestore.GeoPoint;
 
 import java.util.List;
@@ -31,6 +30,10 @@ public interface TripService {
     String getDriverIdByTripId(String bearerToken, String tripId);
 
     ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+
+    ResponseStatus confirmPickupLocationArrival(String bearerToken, PickUpAndCompletionLocation pickUpLocation);
+
+    ResponseStatus confirmDriverTripCompletion(String bearerToken, PickUpAndCompletionLocation completionLocation);
 
     TripDto updateTripStatus(String bearerToken, String tripId, String status);
 

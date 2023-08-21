@@ -31,8 +31,8 @@ public class SpringDocConfig implements WebMvcConfigurer {
     public GroupedOpenApi customerApi() {
         return GroupedOpenApi.builder()
                 .addOpenApiCustomiser(openApi -> openApi.info(customerOpenAPI().getInfo()))
-                .group("Customer")
-                .packagesToScan("cabo.backend.customer.controller")
+                .group("customer-service")
+                .pathsToMatch("/api/v1/customer/**")
                 .build();
     }
 }
