@@ -372,7 +372,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .uid(uid)
                 .build();
 
-        collectionRefFcmToken.document().set(savedFcmToken);
+        collectionRefFcmToken.document(uid).set(savedFcmToken);
     }
 
     private FirebaseToken decodeToken(String idToken) {
