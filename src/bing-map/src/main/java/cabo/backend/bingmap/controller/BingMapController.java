@@ -1,6 +1,7 @@
 package cabo.backend.bingmap.controller;
 
 import cabo.backend.bingmap.dto.ResponseListAddresses;
+import cabo.backend.bingmap.dto.TravelInfor;
 import cabo.backend.bingmap.service.BingMapService;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,18 @@ public class BingMapController {
             Double distance = bingMapService.calculateDistance(latitude_1, longitude_1, latitude_2, longitude_2);
 
             return ResponseEntity.ok(distance);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/bing-map/get-distance-and-time")
+    public ResponseEntity<TravelInfor> getDistanceAndTime(@RequestParam double latitude_1, @RequestParam double longitude_1,
+                                                          @RequestParam double latitude_2, @RequestParam double longitude_2) {
+        try {
+            TravelInfor travelInfor = bingMapService.getDistanceAndTime(latitude_1, longitude_1, latitude_2, longitude_2);
+
+            return ResponseEntity.ok(travelInfor);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

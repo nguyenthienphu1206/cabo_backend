@@ -20,13 +20,9 @@ public class CreateTripDto {
 
     private long cost;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference customerId;
+    private String customerId;
 
-    @JsonSerialize(using = DocumentReferenceSerializer.class)
-    @JsonDeserialize(using = DocumentReferenceDeserializer.class)
-    private DocumentReference driverId;
+    private String driverId;
 
     private double distance;
 

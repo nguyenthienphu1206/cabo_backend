@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RequestReceivedDriverInfo {
 
-    private DocumentReference driverId;
+    private String driverId;
 
     private String tripId;
 

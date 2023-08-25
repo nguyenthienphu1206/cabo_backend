@@ -3,6 +3,8 @@ package cabo.backend.bingmap.service;
 
 import cabo.backend.bingmap.dto.RequestAddress;
 import cabo.backend.bingmap.dto.ResponseListAddresses;
+import cabo.backend.bingmap.dto.Result;
+import cabo.backend.bingmap.dto.TravelInfor;
 import com.google.cloud.firestore.GeoPoint;
 
 import java.util.List;
@@ -17,6 +19,8 @@ public interface BingMapService {
     List<ResponseListAddresses> getRealPlacesBySearchQuery(String query);
 
     Double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2);
+
+    TravelInfor getDistanceAndTime(double latitude_1, double longitude_1, double latitude_2, double longitude_2);
 
     Boolean checkExistedAddress(String address);
 }

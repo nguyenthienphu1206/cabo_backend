@@ -72,6 +72,8 @@ public class BingMapServiceImpl implements BingMapService {
     @Override
     public  List<ResponseListAddresses> getAddressByQuery(String query) {
 
+        final  List<ResponseListAddresses> listAddresses = new ArrayList<>();
+
         String cityQuery = "Thành phố Hồ Chí Minh, Việt Nam";
         String url = String.format("http://dev.virtualearth.net/REST/v1/Locations?query=%s, %s&key=%s&culture=vi-VN", query, cityQuery, apiKey);
 
@@ -81,8 +83,6 @@ public class BingMapServiceImpl implements BingMapService {
                 .bodyToMono(String.class)
                 .block();
 
-
-        final  List<ResponseListAddresses> listAddresses = new ArrayList<>();
 
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -135,11 +135,15 @@ public class BingMapServiceImpl implements BingMapService {
     @Override
     public List<ResponseListAddresses> getRealPlacesBySearchQuery(String query) {
 
-        List<ResponseListAddresses> listAddresses = getListAddressFromDB(query);
+        List<ResponseListAddresses> listAddresses = new ArrayList<>();
+        listAddresses = getListAddressFromDB(query);
 
-        if (listAddresses.size() < 1) {
-            // Using Bing map get list address
-            listAddresses = getAddressByQuery(query);
+        if (query.trim().length() != 0) {
+
+            if (listAddresses.size() < 1) {
+                // Using Bing map get list address
+                listAddresses = getAddressByQuery(query);
+            }
         }
 
         return listAddresses;
@@ -174,6 +178,49 @@ public class BingMapServiceImpl implements BingMapService {
         return 0.0;
     }
 
+    @Override
+    public TravelInfor getDistanceAndTime(double latitude_1, double longitude_1, double latitude_2, double longitude_2) {
+
+        String BING_MAPS_API_URL = "https://dev.virtualearth.net/REST/v1/Routes/DistanceMatrix";
+
+        String url = String.format("%s?origins=%f,%f&destinations=%f,%f&travelMode=driving&key=%s",
+                BING_MAPS_API_URL, latitude_1, longitude_1, latitude_2, longitude_2, apiKey);
+
+        String response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        TravelInfor travelInfor = new TravelInfor();
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            JsonNode responseJson = objectMapper.readTree(response);
+
+            JsonNode resourceSets = responseJson.get("resourceSets");
+            if (resourceSets.isArray() && resourceSets.size() > 0) {
+                JsonNode resources = resourceSets.get(0).get("resources");
+                if (resources.isArray() && resources.size() > 0) {
+
+                    for (JsonNode resource : resources) {
+                        JsonNode results = resource.get("results");
+
+                        double travelDistance = results.get(0).path("travelDistance").asDouble(0);
+                        double travelDuration = results.get(0).path("travelDuration").asDouble(0);
+
+                        travelInfor.setTravelDistance(travelDistance);
+                        travelInfor.setTravelDuration(travelDuration);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return travelInfor;
+    }
 
     @Override
     public Boolean checkExistedAddress(String address) {
@@ -189,11 +236,8 @@ public class BingMapServiceImpl implements BingMapService {
 
                 String addressDB = document.getString("address");
 
-                if (addressDB != null) {
-
-                    if (addressDB.equalsIgnoreCase(address)) {
-                        return true;
-                    }
+                if (addressDB != null && addressDB.equalsIgnoreCase(address)) {
+                    return true;
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -202,6 +246,7 @@ public class BingMapServiceImpl implements BingMapService {
 
         return false;
     }
+
 
     private String processAddress(String address) {
         // Loại bỏ các từ không cần thiết và dấu câu

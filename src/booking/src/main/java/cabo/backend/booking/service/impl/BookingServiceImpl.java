@@ -3,6 +3,7 @@ package cabo.backend.booking.service.impl;
 import cabo.backend.booking.dto.*;
 import cabo.backend.booking.entity.GPS;
 import cabo.backend.booking.entity.GeoPoint;
+import cabo.backend.booking.exception.ResourceNotFoundException;
 import cabo.backend.booking.service.*;
 import cabo.backend.booking.utils.AppConstants;
 import com.google.api.core.ApiFuture;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -55,6 +58,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Value("${rabbitmq.binding.status.routing.key}")
     private String statusRoutingKey;
+
+    @Value("${rabbitmq.binding.status_customer.routing.key}")
+    private String statusCustomerRoutingKey;
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -188,7 +194,7 @@ public class BookingServiceImpl implements BookingService {
         log.info("tripId: " + tripId);
 
         // Update trip status
-        //sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_SEARCHING.name());
+        sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_SEARCHING.name());
 
         CompletableFuture<ResponseDriverInformation> future = CompletableFuture.supplyAsync(() -> {
 
@@ -212,7 +218,10 @@ public class BookingServiceImpl implements BookingService {
                     sendTripReceivedNotification(bearerToken, driverId);
 
                     // Update trip status
-                    //sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_PICKING.name());
+                    sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_PICKING.name());
+
+                    // send distance and time to customer
+                    sendDistanceAndTimeToCustomer(bearerToken, tripId, driverId, customerId, requestBooking.getCustomerOrderLocation());
 
                     // Update driver status
                     driverServiceClient.updateDriverStatus(bearerToken, driverId, AppConstants.StatusDriver.BUSY.name());
@@ -231,7 +240,7 @@ public class BookingServiceImpl implements BookingService {
             responseDriverInformation = new ResponseDriverInformation(null, new DriverInfo());
 
             // Update trip status
-            //sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_NO_DRIVER.name());
+            sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_NO_DRIVER.name());
 
             //tripServiceClient.deleteTrip(bearerToken, tripId);
         }
@@ -240,13 +249,13 @@ public class BookingServiceImpl implements BookingService {
     }
 
     // Đặt xe từ phía Call-Center
-//    @RabbitListener(queues = "${rabbitmq.queue.booking.name}")
-//    public void bookDriveFromCallCenter(RequestBookADriveEvent requestBookADriveEvent) {
-//        String bearerToken = requestBookADriveEvent.getBearerToken();
-//
-//        //sendStatusEventToStatusQueue(bearerToken, "WkgMkVceg8VVnS44VtlA", "TRIP_STATUS_CLOSE");
-//        getDriverInformation(bearerToken, requestBookADriveEvent.getCustomerId(), requestBookADriveEvent.getRequestBookADrive());
-//    }
+    @RabbitListener(queues = "${rabbitmq.queue.booking.name}")
+    public void bookDriveFromCallCenter(RequestBookADriveEvent requestBookADriveEvent) {
+        String bearerToken = requestBookADriveEvent.getBearerToken();
+
+        //sendStatusEventToStatusQueue(bearerToken, "WkgMkVceg8VVnS44VtlA", "TRIP_STATUS_CLOSE");
+        getDriverInformation(bearerToken, requestBookADriveEvent.getCustomerId(), requestBookADriveEvent.getRequestBookADrive());
+    }
 
     private FirebaseToken decodeToken(String idToken) {
 
@@ -259,6 +268,53 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return decodedToken;
+    }
+
+    private String getTripStatus(String bearerToken, String tripId) {
+
+        return tripServiceClient.getTripStatusById(bearerToken, tripId);
+    }
+
+    private void sendDistanceAndTimeToCustomer(String bearerToken, String tripId, String driverId, String customerId, GeoPoint customerOrderLocation) {
+
+        CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
+
+            DocumentReference documentReference = collectionRefGPS.document(driverId);
+
+            ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+            com.google.cloud.firestore.GeoPoint driverLocation;
+
+            try {
+                DocumentSnapshot document = future.get();
+
+                if (document.exists()) {
+                    driverLocation = document.getGeoPoint("currentLocation");
+
+                    if (driverLocation != null) {
+                        while (getTripStatus(bearerToken, tripId).equals(AppConstants.StatusTrip.TRIP_STATUS_PICKING.name())) {
+
+                            TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(
+                                    customerOrderLocation.getLatitude(),
+                                    customerOrderLocation.getLongitude(),
+                                    driverLocation.getLatitude(),
+                                    driverLocation.getLongitude()
+                            );
+
+                            sendDistanceAndTimeToQueue(customerId, travelInfor);
+
+                            Thread.sleep(3000);
+
+                        }
+                    }
+                }
+                else {
+                    throw new ResourceNotFoundException("Driver", "DriverId", driverId);
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private ResponseDriverInformation getDriverInformationFromDB(String bearerToken, String driverId, String tripId) {
@@ -275,17 +331,11 @@ public class BookingServiceImpl implements BookingService {
 
     private ResponseTripId createTrip(String bearerToken, String customerId, RequestBookADrive requestBooking) {
 
-        DocumentRef documentRef = customerServiceClient.getDocumentById(bearerToken, customerId);
-
-        DocumentReference documentReference = documentRef.getDocumentReference();
-
         GeoPoint geoPoint =new GeoPoint(0.0, 0.0);
-
-        log.info("documentReference: " + documentReference);
 
         CreateTripDto createTripDto = CreateTripDto.builder()
                 .cost(requestBooking.getCost())
-                .customerId(documentReference)
+                .customerId(customerId)
                 .driverId(null)
                 .distance(requestBooking.getDistance())
                 .startTime(0)
@@ -339,6 +389,12 @@ public class BookingServiceImpl implements BookingService {
                 long endTime = System.currentTimeMillis() + 5000;
 
                 while (System.currentTimeMillis() < endTime) {
+
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
 
                     String driverId = tripServiceClient.getDriverIdByTripId(bearerToken, tripId);
 
@@ -481,9 +537,69 @@ public class BookingServiceImpl implements BookingService {
         rabbitTemplate.convertAndSend(statusExchange, statusRoutingKey, driveStatus);
     }
 
+    private void sendDistanceAndTimeToQueue(String customerId, TravelInfor travelInfor) {
+
+        String fcmToken = getFcmTokenCustomer(customerId);
+
+        String driverRemainingDistance;
+        double distance = travelInfor.getTravelDistance();
+
+        if (distance < 1) {
+            distance *= 1000;
+            driverRemainingDistance = convertDoubleToString(distance, 1) + " m";
+        } else {
+            driverRemainingDistance = convertDoubleToString(distance, 1) + " km";
+        }
+
+        String driverRemainingTime = convertDoubleToString(travelInfor.getTravelDuration(), 0) + " minutes";
+
+        TravelInfoToCustomer travelInfoToCustomer = TravelInfoToCustomer.builder()
+                .fcmToken(fcmToken)
+                .driverRemainingDistance(driverRemainingDistance)
+                .driverRemainingTime(driverRemainingTime)
+                .build();
+
+
+        // Send event to status queue
+        rabbitTemplate.convertAndSend(statusExchange, statusCustomerRoutingKey, travelInfoToCustomer);
+    }
+
+    private String convertDoubleToString(double value, int decimalPlaces) {
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+        int roundedValue = bd.intValue();
+
+        return String.valueOf(roundedValue);
+    }
+
     private String getFcmTokenCallCenter() {
 
         Query query = collectionRefFcmToken.whereEqualTo("fcmClient", "CALL_CENTER");
+
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        QuerySnapshot querySnapshot;
+
+        try {
+            querySnapshot = querySnapshotFuture.get();
+            if (!querySnapshot.isEmpty()) {
+                QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+
+                return queryDocumentSnapshot.getString("fcmToken");
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return "";
+    }
+
+    private String getFcmTokenCustomer(String customerId) {
+
+        Query query = collectionRefFcmToken.whereEqualTo("fcmClient", "CUSTOMER")
+                .whereEqualTo("uid", customerId);
 
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 

@@ -205,23 +205,14 @@ public class DriverServiceImpl implements DriverService {
 
         String idToken = bearerToken.substring(7);
 
-        //FirebaseToken decodedToken = decodeToken(idToken);
+        FirebaseToken decodedToken = decodeToken(idToken);
 
-        //String uid = decodedToken.getUid();
+        String uid = decodedToken.getUid();
         //log.info("UID -----> " + uid);
 
-//        try {
-//            UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
-//            phoneNumber = userRecord.getPhoneNumber();
-//
-//        } catch (FirebaseAuthException e) {
-//            throw new RuntimeException(e);
-//        }
 
         Query query = collectionRefDrvier.whereEqualTo("phoneNumber", requestRegistryInfo.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
-
-        String driverId;
 
         try {
             QuerySnapshot querySnapshot = querySnapshotFuture.get();
@@ -237,20 +228,15 @@ public class DriverServiceImpl implements DriverService {
                         .driverStatus(AppConstants.StatusDriver.OFFLINE.name())
                         .build();
 
-                DocumentReference documentReference = collectionRefDrvier.document();
+                DocumentReference documentReference = collectionRefDrvier.document(uid);
 
-                ApiFuture<WriteResult> collectionApiFuture = documentReference.set(driver);
-
-                driverId = documentReference.getId();
-            }
-            else {
-                driverId = querySnapshot.getDocuments().get(0).getId();
+                documentReference.set(driver);
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
-        return driverId;
+        return uid;
     }
 
     @Override
@@ -574,28 +560,6 @@ public class DriverServiceImpl implements DriverService {
                 .build();
 
         ApiFuture<WriteResult> collectionApiFuture = collectionRefFcmToken.document().set(savedFcmToken);
-    }
-
-    @Override
-    public ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo) {
-
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        DocumentReference documentReference = collectionRefDrvier.document(requestReceivedDriverInfo.getDriverId());
-
-        RequestReceivedDriverRefInfo requestReceivedDriverRefInfo = RequestReceivedDriverRefInfo.builder()
-                .tripId(requestReceivedDriverInfo.getTripId())
-                .driverId(documentReference)
-                .currentLocation(requestReceivedDriverInfo.getCurrentLocation())
-                .build();
-
-        ResponseStatus responseStatus = tripServiceClient.sendReceivedDriverInfo(bearerToken, requestReceivedDriverRefInfo);
-
-        //sendNotification(bearerToken, requestReceivedDriverInfo.getDriverId(), responseStatus.getMessage());
-
-        return responseStatus;
     }
 
     @Override

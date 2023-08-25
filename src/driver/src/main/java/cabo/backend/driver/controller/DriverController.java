@@ -176,15 +176,6 @@ public class DriverController {
         }
     }
 
-    @PostMapping("/drive-booking/accept-drive")
-    public ResponseEntity<ResponseStatus> sendReceivedDriverInfo(@RequestHeader("Authorization") String bearerToken,
-                                                                 @RequestBody RequestReceivedDriverInfo requestReceivedDriverInfo) {
-
-        ResponseStatus responseStatus = driverService.sendReceivedDriverInfo(bearerToken, requestReceivedDriverInfo);
-
-        return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
-    }
-
     @PostMapping("/drive-booking/current-gps")
     public ResponseEntity<ResponseStatus> sendGPS(@RequestHeader("Authorization") String bearerToken,
                                                   @RequestBody RequestGPS requestGPS) {

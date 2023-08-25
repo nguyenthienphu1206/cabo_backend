@@ -15,16 +15,27 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.status.name}")
     private String statusQueue;
 
+    @Value("${rabbitmq.queue.status_customer.name}")
+    private String statusCustomerQueue;
+
     @Value("${rabbitmq.exchange.status.name}")
     private String statusExchange;
 
     @Value("${rabbitmq.binding.status.routing.key}")
     private String statusRoutingKey;
 
+    @Value("${rabbitmq.binding.status_customer.routing.key}")
+    private String statusCustomerRoutingKey;
+
     // spring bean for queue
     @Bean
     public Queue statusQueue() {
         return new Queue(statusQueue);
+    }
+
+    @Bean
+    public Queue statusCustomerQueue() {
+        return new Queue(statusCustomerQueue);
     }
 
     // spring bean for exchange
@@ -40,6 +51,14 @@ public class RabbitMQConfig {
                 .bind(statusQueue())
                 .to(statusExchange())
                 .with(statusRoutingKey);
+    }
+
+    @Bean
+    public Binding statusCustomerBinding() {
+        return BindingBuilder
+                .bind(statusCustomerQueue())
+                .to(statusExchange())
+                .with(statusCustomerRoutingKey);
     }
 
     // message converter

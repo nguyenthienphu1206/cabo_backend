@@ -29,7 +29,9 @@ public interface TripService {
 
     String getDriverIdByTripId(String bearerToken, String tripId);
 
-    ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+    String getTripStatusById(String bearerToken, String tripId);
+
+    ResponseStatus acceptDrive(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 
     ResponseStatus confirmPickupLocationArrival(String bearerToken, PickUpAndCompletionLocation pickUpLocation);
 
@@ -38,4 +40,6 @@ public interface TripService {
     TripDto updateTripStatus(String bearerToken, String tripId, String status);
 
     void deleteTrip(String bearerToken, String tripId);
+
+    void deleteAllTrips();
 }

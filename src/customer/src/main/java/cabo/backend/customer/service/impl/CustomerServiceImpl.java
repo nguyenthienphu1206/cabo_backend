@@ -98,9 +98,9 @@ public class CustomerServiceImpl implements CustomerService {
 
         String idToken = bearerToken.substring(7);
 
-        //FirebaseToken decodedToken = decodeToken(idToken);
+        FirebaseToken decodedToken = decodeToken(idToken);
 
-        //String uid = decodedToken.getUid();
+        String uid = decodedToken.getUid();
         //log.info("UID -----> " + uid);
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
@@ -116,7 +116,6 @@ public class CustomerServiceImpl implements CustomerService {
                 log.info("Empty");
 
                 Customer customer = Customer.builder()
-                        //.uid(uid)
                         .fullName(requestRegisterCustomer.getFullName())
                         .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                         .avatar("")
@@ -124,7 +123,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .isRegisteredOnApp(true)
                         .build();
 
-                DocumentReference documentReference = collectionRefCustomer.document();
+                DocumentReference documentReference = collectionRefCustomer.document(uid);
 
                 documentReference.set(customer);
 
@@ -137,7 +136,6 @@ public class CustomerServiceImpl implements CustomerService {
                 if (Boolean.FALSE.equals(isRegisteredOnApp)) {
 
                     Customer customerInDB = Customer.builder()
-                            //.uid(uid)
                             .fullName(requestRegisterCustomer.getFullName())
                             .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                             .avatar("")

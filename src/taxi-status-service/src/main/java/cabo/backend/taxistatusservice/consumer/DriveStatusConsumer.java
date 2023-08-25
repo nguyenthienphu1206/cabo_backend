@@ -1,8 +1,6 @@
 package cabo.backend.taxistatusservice.consumer;
 
-import cabo.backend.taxistatusservice.dto.DriveStatus;
-import cabo.backend.taxistatusservice.dto.NotificationDto;
-import cabo.backend.taxistatusservice.dto.TripDto;
+import cabo.backend.taxistatusservice.dto.*;
 import cabo.backend.taxistatusservice.service.TripServiceClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -52,6 +50,21 @@ public class DriveStatusConsumer {
         }
     }
 
+    @RabbitListener(queues = "${rabbitmq.queue.status_customer.name}")
+    public void consumeDriveStatusToCustomer(TravelInfoToCustomer travelInfoToCustomer) {
+
+        // Tạo notification
+        NotificationDto notificationDto = new NotificationDto();
+
+        // Lấy data
+        Map<String, String> data = createDataFromDistanceAndTime(travelInfoToCustomer);
+
+        // Gửi notification về phía tổng đài
+        if (!travelInfoToCustomer.getFcmToken().equals("")) {
+            sendNotification(notificationDto, travelInfoToCustomer.getFcmToken(), data);
+        }
+    }
+
     private FirebaseToken decodeToken(String idToken) {
 
         FirebaseToken decodedToken;
@@ -92,6 +105,17 @@ public class DriveStatusConsumer {
 
         data.put("tripId", tripId);
         data.put("tripInfo", tripDto.toString());
+
+        return data;
+    }
+
+    private Map<String, String> createDataFromDistanceAndTime(TravelInfoToCustomer travelInfoToCustomer) {
+
+        Map<String, String> data = new HashMap<>();
+
+        data.put("category", "UPDATE_DRIVER_DISTANCE_AND_TIME");
+        data.put("driverRemainingDistance", travelInfoToCustomer.getDriverRemainingDistance());
+        data.put("driverRemainingTime", travelInfoToCustomer.getDriverRemainingTime());
 
         return data;
     }
