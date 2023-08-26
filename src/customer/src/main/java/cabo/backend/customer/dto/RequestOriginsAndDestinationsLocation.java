@@ -15,4 +15,6 @@ public class RequestOriginsAndDestinationsLocation {
     private GeoPoint fromLocation;
 
     private GeoPoint toLocation;
+
+    private String vehicleType;
 }

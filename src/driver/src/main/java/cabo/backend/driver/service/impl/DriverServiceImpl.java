@@ -210,7 +210,6 @@ public class DriverServiceImpl implements DriverService {
         String uid = decodedToken.getUid();
         //log.info("UID -----> " + uid);
 
-
         Query query = collectionRefDrvier.whereEqualTo("phoneNumber", requestRegistryInfo.getPhoneNumber());
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 
@@ -220,7 +219,7 @@ public class DriverServiceImpl implements DriverService {
             if (querySnapshot.isEmpty()) {
 
                 Driver driver = Driver.builder()
-                        .uid("")
+                        .uid(uid)
                         .fullName(requestRegistryInfo.getFullName())
                         .phoneNumber(requestRegistryInfo.getPhoneNumber())
                         .avatar("")
@@ -266,7 +265,6 @@ public class DriverServiceImpl implements DriverService {
         }
 
         ResponseDriverDetails responseDriverDetails = ResponseDriverDetails.builder()
-                .uid(driver.getUid())
                 .fullName(driver.getFullName())
                 .phoneNumber(driver.getPhoneNumber())
                 .avatar(driver.getAvatar())
@@ -559,7 +557,7 @@ public class DriverServiceImpl implements DriverService {
                 .uid(uid)
                 .build();
 
-        ApiFuture<WriteResult> collectionApiFuture = collectionRefFcmToken.document().set(savedFcmToken);
+        collectionRefFcmToken.document(uid).set(savedFcmToken);
     }
 
     @Override
@@ -585,46 +583,5 @@ public class DriverServiceImpl implements DriverService {
         }
 
         return decodedToken;
-    }
-
-    private void sendNotification(String bearerToken, String driverId, String message) {
-
-        if (message.equals("Successfully")) {
-
-            DocumentReference documentReference = collectionRefDrvier.document(driverId);
-
-            ApiFuture<DocumentSnapshot> future = documentReference.get();
-
-            try {
-                DocumentSnapshot document = future.get();
-
-                if (document.exists()) {
-
-                    Driver driver = document.toObject(Driver.class);
-
-                    if (driver != null) {
-                        String uid = driver.getUid();
-
-                        NotificationDto notificationDto = NotificationDto.builder()
-                                .title("BOOKING_CLOSE")
-                                .body("BOOKING_CLOSE")
-                                .build();
-
-                        RequestUidAndNotification requestUidAndNotification = RequestUidAndNotification.builder()
-                                .uid(uid)
-                                .notificationDto(notificationDto)
-                                .build();
-
-                        ResponseStatus rsNotify = bookingServiceClient.sendNotificationToDesignatedDriver(bearerToken, requestUidAndNotification);
-                    }
-                }
-                else {
-                    throw new ResourceNotFoundException("Document", "DriverId", driverId);
-                }
-
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

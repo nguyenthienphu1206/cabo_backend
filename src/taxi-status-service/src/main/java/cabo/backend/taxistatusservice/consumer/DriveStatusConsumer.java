@@ -65,6 +65,24 @@ public class DriveStatusConsumer {
         }
     }
 
+    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
+    public void consumeDriveStatusDoneToCustomer(NotificationDriveDone notificationDriveDone) {
+
+        // Tạo notification
+        NotificationDto notificationDto = NotificationDto.builder()
+                .title("Your trip has ended")
+                .body("Thank you for trusting us.")
+                .build();
+
+        // Lấy data
+        Map<String, String> data = createDataStatusDone(notificationDriveDone);
+
+        // Gửi notification về phía tổng đài
+        if (!notificationDriveDone.getFcmToken().equals("")) {
+            sendNotification(notificationDto, notificationDriveDone.getFcmToken(), data);
+        }
+    }
+
     private FirebaseToken decodeToken(String idToken) {
 
         FirebaseToken decodedToken;
@@ -116,6 +134,16 @@ public class DriveStatusConsumer {
         data.put("category", "UPDATE_DRIVER_DISTANCE_AND_TIME");
         data.put("driverRemainingDistance", travelInfoToCustomer.getDriverRemainingDistance());
         data.put("driverRemainingTime", travelInfoToCustomer.getDriverRemainingTime());
+
+        return data;
+    }
+
+    private Map<String, String> createDataStatusDone(NotificationDriveDone notificationDriveDone) {
+
+        Map<String, String> data = new HashMap<>();
+
+        data.put("category", "INFORM_TRIP_DONE");
+        data.put("tripId", notificationDriveDone.getTripId());
 
         return data;
     }

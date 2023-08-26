@@ -17,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -116,6 +119,7 @@ public class CustomerServiceImpl implements CustomerService {
                 log.info("Empty");
 
                 Customer customer = Customer.builder()
+                        .uid(uid)
                         .fullName(requestRegisterCustomer.getFullName())
                         .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                         .avatar("")
@@ -123,7 +127,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .isRegisteredOnApp(true)
                         .build();
 
-                DocumentReference documentReference = collectionRefCustomer.document(uid);
+                DocumentReference documentReference = collectionRefCustomer.document();
 
                 documentReference.set(customer);
 
@@ -136,6 +140,7 @@ public class CustomerServiceImpl implements CustomerService {
                 if (Boolean.FALSE.equals(isRegisteredOnApp)) {
 
                     Customer customerInDB = Customer.builder()
+                            .uid(uid)
                             .fullName(requestRegisterCustomer.getFullName())
                             .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                             .avatar("")
@@ -162,8 +167,6 @@ public class CustomerServiceImpl implements CustomerService {
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
-
-        //String uid = decodedToken.getUid();
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", phoneNumber);
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
@@ -331,13 +334,28 @@ public class CustomerServiceImpl implements CustomerService {
         double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
         double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
 
-        Double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon);
+        double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon) * 1.0D;
 
-        Double estimateCost = getEstimateCost(distance);
+        double estimateCost = getEstimateCost(distance) * 1.0D;
+
+        if (requestOriginsAndDestinationsLocation.getVehicleType().equals("VEHICLE_TYPE_CAR_6")) {
+            estimateCost *= 1.5;
+        }
+
+        String estimateCostFormat = (int)convertDoubleToDoubleFormat(estimateCost, -3) + " VND";
+
+        String distanceFormat;
+
+        if (distance < 1) {
+            distance *= 1000;
+            distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
+        } else {
+            distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
+        }
 
         ResponseEstimateCostAndDistance responseEstimateCostAndDistance = ResponseEstimateCostAndDistance.builder()
-                .cost(estimateCost)
-                .distance(distance)
+                .cost(estimateCostFormat)
+                .distance(distanceFormat)
                 .build();
 
         return responseEstimateCostAndDistance;
@@ -397,5 +415,13 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return cost;
+    }
+
+    private double convertDoubleToDoubleFormat(double value, int decimalPlaces) {
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+
+        return bd.doubleValue();
     }
 }

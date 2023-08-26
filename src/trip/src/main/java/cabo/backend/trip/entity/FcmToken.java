@@ -1,4 +1,4 @@
-package cabo.backend.customer.dto;
+package cabo.backend.trip.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseEstimateCostAndDistance {
+public class FcmToken {
 
-    private String cost;
+    private String fcmToken;
 
-    private String distance;
+    private String fcmClient;
+
+    private String uid;
 }

@@ -14,7 +14,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -40,13 +42,29 @@ public class TripServiceImpl implements TripService {
 
     private final CollectionReference collectionRefTrip;
 
+    private static final String COLLECTION_NAME_FCMTOKEN = "fcmTokens";
+
+    private final CollectionReference collectionRefFcmToken;
+
     private Firestore dbFirestore;
 
-    public  TripServiceImpl(Firestore dbFirestore) {
+    @Value("${rabbitmq.exchange.status.name}")
+    private String statusExchange;
+
+    @Value("${rabbitmq.binding.status_done.routing.key}")
+    private String statusDoneRoutingKey;
+
+    private final RabbitTemplate rabbitTemplate;
+
+    public  TripServiceImpl(Firestore dbFirestore, RabbitTemplate rabbitTemplate) {
 
         this.dbFirestore = dbFirestore;
 
         this.collectionRefTrip = dbFirestore.collection(COLLECTION_NAME_TRIP);
+
+        this.collectionRefFcmToken = dbFirestore.collection(COLLECTION_NAME_FCMTOKEN);
+
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -583,6 +601,14 @@ public class TripServiceImpl implements TripService {
                         trip.setUpdatedAt(Instant.now().getEpochSecond());
                         documentReference.set(trip);
 
+                        NotificationDriveDone notificationDriveDone = NotificationDriveDone.builder()
+                                .fcmToken(getFcmTokenCustomer(trip.getCustomerId()))
+                                .tripId(document.getId())
+                                .build();
+
+                        // send to drive-status,then send to customer
+                        rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriveDone);
+
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Successful");
                     }
@@ -707,5 +733,29 @@ public class TripServiceImpl implements TripService {
         geoPoint.setLongitude(geoPointFirestore.getLongitude());
 
         return geoPoint;
+    }
+
+    private String getFcmTokenCustomer(String customerId) {
+
+        Query query = collectionRefFcmToken.whereEqualTo("fcmClient", "CUSTOMER")
+                .whereEqualTo("uid", customerId);
+
+        ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
+
+        QuerySnapshot querySnapshot;
+
+        try {
+            querySnapshot = querySnapshotFuture.get();
+            if (!querySnapshot.isEmpty()) {
+                QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
+
+                return queryDocumentSnapshot.getString("fcmToken");
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return "";
     }
 }

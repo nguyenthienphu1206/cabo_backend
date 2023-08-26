@@ -98,25 +98,23 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private void sendTripReceivedNotification(String bearerToken, String driverId) {
+    private void sendTripReceivedNotification(String driverId) {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .title("BOOKING_CLOSED")
                 .body("BOOKING_CLOSED")
                 .build();
 
-        String uid = driverServiceClient.getUidByDriverId(bearerToken, driverId);
-
         List<String> fcmTokens = getAllDeviceTokensDriver();
 
-        Query query = collectionRefFcmToken.whereEqualTo("uid", uid);
+        DocumentReference documentReference = collectionRefFcmToken.document(driverId);
 
         try {
-            QuerySnapshot querySnapshot = query.get().get();
+            ApiFuture<DocumentSnapshot> future = documentReference.get();
 
-            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+            DocumentSnapshot document = future.get();
 
-            String fcmToken = documents.get(0).getString("fcmToken");
+            String fcmToken = document.getString("fcmToken");
 
             // Bỏ đi tài xế đang nhận cuốc
             fcmTokens.remove(fcmToken);
@@ -215,7 +213,7 @@ public class BookingServiceImpl implements BookingService {
                     responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
 
                     // Gửi thông báo đã có người nhận cuốc đến tất cả người còn lại
-                    sendTripReceivedNotification(bearerToken, driverId);
+                    sendTripReceivedNotification(driverId);
 
                     // Update trip status
                     sendStatusEventToStatusQueue(bearerToken, tripId, AppConstants.StatusTrip.TRIP_STATUS_PICKING.name());
@@ -546,12 +544,12 @@ public class BookingServiceImpl implements BookingService {
 
         if (distance < 1) {
             distance *= 1000;
-            driverRemainingDistance = convertDoubleToString(distance, 1) + " m";
+            driverRemainingDistance = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
         } else {
-            driverRemainingDistance = convertDoubleToString(distance, 1) + " km";
+            driverRemainingDistance = convertDoubleToDoubleFormat(distance, 1) + " km";
         }
 
-        String driverRemainingTime = convertDoubleToString(travelInfor.getTravelDuration(), 0) + " minutes";
+        String driverRemainingTime = (int)convertDoubleToDoubleFormat(travelInfor.getTravelDuration(), 0) + " minutes";
 
         TravelInfoToCustomer travelInfoToCustomer = TravelInfoToCustomer.builder()
                 .fcmToken(fcmToken)
@@ -564,13 +562,12 @@ public class BookingServiceImpl implements BookingService {
         rabbitTemplate.convertAndSend(statusExchange, statusCustomerRoutingKey, travelInfoToCustomer);
     }
 
-    private String convertDoubleToString(double value, int decimalPlaces) {
+    private double convertDoubleToDoubleFormat(double value, int decimalPlaces) {
 
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
-        int roundedValue = bd.intValue();
 
-        return String.valueOf(roundedValue);
+        return bd.doubleValue();
     }
 
     private String getFcmTokenCallCenter() {

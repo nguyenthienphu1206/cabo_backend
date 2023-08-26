@@ -13,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SpringDocConfig implements WebMvcConfigurer {
 
     @Bean
-    public OpenAPI driverOpenAPI() {
+    public OpenAPI tripOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("Trip")
@@ -28,11 +28,11 @@ public class SpringDocConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public GroupedOpenApi driverApi() {
+    public GroupedOpenApi tripApi() {
         return GroupedOpenApi.builder()
-                .addOpenApiCustomiser(openApi -> openApi.info(driverOpenAPI().getInfo()))
+                .addOpenApiCustomiser(openApi -> openApi.info(tripOpenAPI().getInfo()))
                 .group("Trip")
-                .packagesToScan("cabo.backend.trip.controller")
+                .pathsToMatch("/api/v1/trip/**")
                 .build();
     }
 }
