@@ -4,6 +4,7 @@ import cabo.backend.booking.dto.CustomerDto;
 import cabo.backend.booking.dto.DocumentRef;
 import com.google.cloud.firestore.DocumentReference;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,4 +22,7 @@ public interface CustomerServiceClient {
     @GetMapping("/api/v1/customer/{id}")
     CustomerDto getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                    @PathVariable("id") String customerId);
+
+    @GetMapping("/api/v1/{customerId}/uid")
+    String getUidByCustomerId(@PathVariable("customerId") String customerId);
 }

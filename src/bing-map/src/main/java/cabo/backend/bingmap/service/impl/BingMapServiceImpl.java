@@ -7,12 +7,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -223,6 +226,39 @@ public class BingMapServiceImpl implements BingMapService {
     }
 
     @Override
+    public ResponseEstimateCostAndDistance getEstimateCostAndDistance(RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
+
+        double fromLat = requestOriginsAndDestinationsLocation.getFromLocation().getLatitude();
+        double fromLon = requestOriginsAndDestinationsLocation.getFromLocation().getLongitude();
+        double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
+        double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
+
+        double distance = calculateDistance(fromLat, fromLon, toLat, toLon) * 1.0D;
+
+        double estimateCost = getEstimateCost(distance) * 1.0D;
+
+        if (requestOriginsAndDestinationsLocation.getVehicleType().equals("VEHICLE_TYPE_CAR_6")) {
+            estimateCost *= 1.5;
+        }
+
+        String estimateCostFormat = (int)convertDoubleToDoubleFormat(estimateCost, -3) + " VND";
+
+        String distanceFormat;
+
+        if (distance < 1) {
+            distance *= 1000;
+            distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
+        } else {
+            distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
+        }
+
+        return ResponseEstimateCostAndDistance.builder()
+                .cost(estimateCostFormat)
+                .distance(distanceFormat)
+                .build();
+    }
+
+    @Override
     public Boolean checkExistedAddress(String address) {
 
         ApiFuture<QuerySnapshot> future = collectionRefAddress.get();
@@ -301,5 +337,26 @@ public class BingMapServiceImpl implements BingMapService {
         }
 
         return listAddresses;
+    }
+
+    private Double getEstimateCost(Double distance) {
+
+        double baseCostPerKm = 4300.0;
+
+        double cost = 12500.0;
+
+        if (distance > 2.0) {
+            cost += baseCostPerKm * (distance - 2.0);
+        }
+
+        return cost;
+    }
+
+    private double convertDoubleToDoubleFormat(double value, int decimalPlaces) {
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+
+        return bd.doubleValue();
     }
 }

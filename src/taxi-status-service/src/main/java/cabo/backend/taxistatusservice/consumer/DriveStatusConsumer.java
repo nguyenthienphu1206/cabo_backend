@@ -2,6 +2,8 @@ package cabo.backend.taxistatusservice.consumer;
 
 import cabo.backend.taxistatusservice.dto.*;
 import cabo.backend.taxistatusservice.service.TripServiceClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -24,25 +26,13 @@ public class DriveStatusConsumer {
     @RabbitListener(queues = "${rabbitmq.queue.status.name}")
     public void consumeDriveStatus(DriveStatus driveStatus) {
 
-        String bearerToken = driveStatus.getBearerToken();
-
         log.info("Status");
 
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        // Cập nhật trạng thái chuyến đi
-        TripDto tripDto = tripServiceClient.updateTripStatus(bearerToken, driveStatus.getTripId(), driveStatus.getStatus());
-
         // Tạo notification
-        NotificationDto notificationDto = NotificationDto.builder()
-                .title("UPDATE_DRIVE_STATE")
-                .body("UPDATE_DRIVE_STATE")
-                .build();
+        NotificationDto notificationDto = new NotificationDto("", "");
 
         // Tạo data từ chuyến đi
-        Map<String, String> data = createDataFromTrip(tripDto, driveStatus.getTripId());
+        Map<String, String> data = createDataFromTrip(driveStatus.getTripDto(), driveStatus.getTripId());
 
         // Gửi notification về phía tổng đài
         if (!driveStatus.getFcmToken().equals("")) {
@@ -54,34 +44,36 @@ public class DriveStatusConsumer {
     public void consumeDriveStatusToCustomer(TravelInfoToCustomer travelInfoToCustomer) {
 
         // Tạo notification
-        NotificationDto notificationDto = new NotificationDto();
+        NotificationDto notificationDto = new NotificationDto("", "");
 
         // Lấy data
         Map<String, String> data = createDataFromDistanceAndTime(travelInfoToCustomer);
 
-        // Gửi notification về phía tổng đài
-        if (!travelInfoToCustomer.getFcmToken().equals("")) {
+        log.info("FCmtoken: " + travelInfoToCustomer.getFcmToken());
+
+        // Gửi notification về phía customer
+        if (!travelInfoToCustomer.getFcmToken().equals("") && travelInfoToCustomer.getFcmToken() != null) {
             sendNotification(notificationDto, travelInfoToCustomer.getFcmToken(), data);
         }
     }
 
-    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
-    public void consumeDriveStatusDoneToCustomer(NotificationDriveDone notificationDriveDone) {
-
-        // Tạo notification
-        NotificationDto notificationDto = NotificationDto.builder()
-                .title("Your trip has ended")
-                .body("Thank you for trusting us.")
-                .build();
-
-        // Lấy data
-        Map<String, String> data = createDataStatusDone(notificationDriveDone);
-
-        // Gửi notification về phía tổng đài
-        if (!notificationDriveDone.getFcmToken().equals("")) {
-            sendNotification(notificationDto, notificationDriveDone.getFcmToken(), data);
-        }
-    }
+//    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
+//    public void consumeDriveStatusDoneToCustomer(NotificationDriveDone notificationDriveDone) {
+//
+//        // Tạo notification
+//        NotificationDto notificationDto = NotificationDto.builder()
+//                .title("Your trip has ended")
+//                .body("Thank you for trusting us.")
+//                .build();
+//
+//        // Lấy data
+//        Map<String, String> data = createDataStatusDone(notificationDriveDone);
+//
+//        // Gửi notification về phía tổng đài
+//        if (!notificationDriveDone.getFcmToken().equals("")) {
+//            sendNotification(notificationDto, notificationDriveDone.getFcmToken(), data);
+//        }
+//    }
 
     private FirebaseToken decodeToken(String idToken) {
 
@@ -121,8 +113,17 @@ public class DriveStatusConsumer {
 
         Map<String, String> data = new HashMap<>();
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonData = null;
+        try {
+            jsonData = objectMapper.writeValueAsString(tripDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        data.put("category", "UPDATE_DRIVE_STATE");
         data.put("tripId", tripId);
-        data.put("tripInfo", tripDto.toString());
+        data.put("tripInfo", jsonData);
 
         return data;
     }

@@ -97,6 +97,60 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public String getUidByCustomerId(String customerId) {
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String uid;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                uid = document.getString("uid");
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return uid;
+    }
+
+    @Override
+    public ResponseFullNameAndPhone getNameAndPhoneByCustomerId(String bearerToken, String customerId) {
+
+        String idToken = bearerToken.substring(7);
+
+        //FirebaseToken decodedToken = decodeToken(idToken);
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+
+                return ResponseFullNameAndPhone.builder()
+                        .fullName(document.getString("fullName"))
+                        .phoneNumber(document.getString("phoneNumber"))
+                        .build();
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
 
         String idToken = bearerToken.substring(7);
@@ -322,46 +376,6 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public ResponseEstimateCostAndDistance getEstimateCostAndDistance(String bearerToken,
-                                                                      RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
-
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        double fromLat = requestOriginsAndDestinationsLocation.getFromLocation().getLatitude();
-        double fromLon = requestOriginsAndDestinationsLocation.getFromLocation().getLongitude();
-        double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
-        double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
-
-        double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon) * 1.0D;
-
-        double estimateCost = getEstimateCost(distance) * 1.0D;
-
-        if (requestOriginsAndDestinationsLocation.getVehicleType().equals("VEHICLE_TYPE_CAR_6")) {
-            estimateCost *= 1.5;
-        }
-
-        String estimateCostFormat = (int)convertDoubleToDoubleFormat(estimateCost, -3) + " VND";
-
-        String distanceFormat;
-
-        if (distance < 1) {
-            distance *= 1000;
-            distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
-        } else {
-            distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
-        }
-
-        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = ResponseEstimateCostAndDistance.builder()
-                .cost(estimateCostFormat)
-                .distance(distanceFormat)
-                .build();
-
-        return responseEstimateCostAndDistance;
-    }
-
-    @Override
     public ResponseDriverInformation bookADrive(String bearerToken, String customerId, RequestBookADrive requestBookADrive) {
 
         ResponseDriverInformation responseDriverInformation = bookingServiceClient.getDriverInformation(bearerToken, customerId, requestBookADrive);
@@ -402,26 +416,5 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return decodedToken;
-    }
-
-    private Double getEstimateCost(Double distance) {
-
-        double baseCostPerKm = 4300.0;
-
-        double cost = 12500.0;
-
-        if (distance > 2.0) {
-            cost += baseCostPerKm * (distance - 2.0);
-        }
-
-        return cost;
-    }
-
-    private double convertDoubleToDoubleFormat(double value, int decimalPlaces) {
-
-        BigDecimal bd = new BigDecimal(value);
-        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
-
-        return bd.doubleValue();
     }
 }

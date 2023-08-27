@@ -1,4 +1,4 @@
-package cabo.backend.callcenter.entity;
+package cabo.backend.customer.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FcmToken {
+public class ResponseFullNameAndPhone {
 
-    private String fcmToken;
+    private String fullName;
 
-    private String fcmClient;
-
-    private String uid;
+    private String phoneNumber;
 }

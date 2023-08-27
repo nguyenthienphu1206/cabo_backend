@@ -2,6 +2,7 @@ package cabo.backend.booking.service;
 
 import cabo.backend.booking.dto.DocumentRef;
 import cabo.backend.booking.dto.DriverInfo;
+import cabo.backend.booking.dto.ResponseStatus;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 

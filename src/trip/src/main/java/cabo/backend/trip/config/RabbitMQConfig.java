@@ -12,16 +12,26 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    @Value("${rabbitmq.queue.status.name}")
+    private String statusQueue;
     @Value("${rabbitmq.queue.status_done.name}")
     private String statusDoneQueue;
 
     @Value("${rabbitmq.exchange.status.name}")
     private String statusExchange;
 
+    @Value("${rabbitmq.binding.status.routing.key}")
+    private String statusRoutingKey;
+
     @Value("${rabbitmq.binding.status_done.routing.key}")
     private String statusDoneRoutingKey;
 
     // spring bean for queue
+    @Bean
+    public Queue statusQueue() {
+        return new Queue(statusQueue);
+    }
+
     @Bean
     public Queue statusDoneQueue() {
         return new Queue(statusDoneQueue);
@@ -35,7 +45,15 @@ public class RabbitMQConfig {
 
     // spring bean for binding between exchange and queue using routing key
     @Bean
-    public Binding locationBinding() {
+    public Binding statusBinding() {
+        return BindingBuilder
+                .bind(statusQueue())
+                .to(statusExchange())
+                .with(statusRoutingKey);
+    }
+
+    @Bean
+    public Binding statusDoneBinding() {
         return BindingBuilder
                 .bind(statusDoneQueue())
                 .to(statusExchange())

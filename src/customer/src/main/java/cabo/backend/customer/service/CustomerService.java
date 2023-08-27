@@ -10,6 +10,10 @@ public interface CustomerService {
 
     String getNameByCustomerId(String bearerToken, String customerId);
 
+    String getUidByCustomerId(String customerId);
+
+    ResponseFullNameAndPhone getNameAndPhoneByCustomerId(String bearerToken, String customerId);
+
     String registerCustomer(String idToken, RequestRegisterCustomer requestRegisterCustomer);
 
     String createCustomerIfPhoneNumberNotRegistered(String bearerToken, String phoneNumber);
@@ -21,9 +25,6 @@ public interface CustomerService {
     Boolean checkPhoneExistence(String idToken, String phoneNumber);
 
     ResponseOverview getOverview(String idToken, String customerId);
-
-    ResponseEstimateCostAndDistance getEstimateCostAndDistance(String bearerToken,
-                                                                    RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation);
 
     ResponseDriverInformation bookADrive(String bearerToken, String customerId, RequestBookADrive requestBookADrive);
 

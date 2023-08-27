@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/driver")
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class DriverController {
 
     private DriverService driverService;
@@ -159,12 +159,13 @@ public class DriverController {
 
     @GetMapping("/notification/subscribe/{fcmToken}")
     public ResponseEntity<ResponseStatus> subscribeNotification(@RequestHeader("Authorization") String bearerToken,
-                                                                               @PathVariable("fcmToken") String fcmToken) {
+                                                                @PathVariable("fcmToken") String fcmToken,
+                                                                @RequestParam String carType) {
 
         ResponseStatus responseStatus;
 
         try {
-            driverService.subscribeNotification(bearerToken, fcmToken);
+            driverService.subscribeNotification(bearerToken, fcmToken, carType);
 
             responseStatus = new ResponseStatus(new Date(), "Successfully");
 

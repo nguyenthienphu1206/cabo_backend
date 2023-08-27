@@ -1,5 +1,7 @@
 package cabo.backend.bingmap.controller;
 
+import cabo.backend.bingmap.dto.RequestOriginsAndDestinationsLocation;
+import cabo.backend.bingmap.dto.ResponseEstimateCostAndDistance;
 import cabo.backend.bingmap.dto.ResponseListAddresses;
 import cabo.backend.bingmap.dto.TravelInfor;
 import cabo.backend.bingmap.service.BingMapService;
@@ -66,6 +68,14 @@ public class BingMapController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @PostMapping("/bing-map/drive-booking/estimate-cost")
+    public ResponseEntity<ResponseEstimateCostAndDistance> getEstimateCostAndDistance(@RequestBody RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
+
+        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = bingMapService.getEstimateCostAndDistance(requestOriginsAndDestinationsLocation);
+
+        return new ResponseEntity<>(responseEstimateCostAndDistance, HttpStatus.OK);
     }
 }
 

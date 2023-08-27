@@ -1,4 +1,4 @@
-package cabo.backend.callcenter.entity;
+package cabo.backend.trip.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FcmToken {
+public class DriveStatus {
 
     private String fcmToken;
 
-    private String fcmClient;
+    private String tripId;
 
-    private String uid;
+    private TripDto tripDto;
 }

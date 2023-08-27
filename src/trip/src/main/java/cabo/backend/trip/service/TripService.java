@@ -37,7 +37,7 @@ public interface TripService {
 
     ResponseStatus confirmDriverTripCompletion(String bearerToken, PickUpAndCompletionLocation completionLocation);
 
-    TripDto updateTripStatus(String bearerToken, String tripId, String status);
+    ResponseStatus updateTripStatus(String bearerToken, String tripId, String status);
 
     void deleteTrip(String bearerToken, String tripId);
 

@@ -9,7 +9,9 @@ import cabo.backend.driver.exception.CheckInException;
 import cabo.backend.driver.exception.CheckOutException;
 import cabo.backend.driver.exception.ResourceNotFoundException;
 import cabo.backend.driver.service.*;
-import cabo.backend.driver.utils.AppConstants;
+import cabo.backend.driver.utils.FcmClient;
+import cabo.backend.driver.utils.StatusDriver;
+import cabo.backend.driver.utils.VehicleType;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
@@ -224,7 +226,7 @@ public class DriverServiceImpl implements DriverService {
                         .phoneNumber(requestRegistryInfo.getPhoneNumber())
                         .avatar("")
                         .vehicleId(null)
-                        .driverStatus(AppConstants.StatusDriver.OFFLINE.name())
+                        .driverStatus(StatusDriver.OFFLINE.name())
                         .build();
 
                 DocumentReference documentReference = collectionRefDrvier.document(uid);
@@ -318,38 +320,63 @@ public class DriverServiceImpl implements DriverService {
 
         ApiFuture<DocumentSnapshot> future = documentReference.get();
 
-        DocumentSnapshot document;
+        String vehicleId;
 
         try {
-            document = future.get();
-            log.info("Document ----> " + document);
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                // Đăng Kí vehicle và trả về vehicleId
+                vehicleId = vehicleServiceClient.registerVehicle(bearerToken, requestRegisterVehicle);
+
+                DocumentRef documentRef = vehicleServiceClient.getDocumentById(bearerToken, vehicleId);
+
+                DocumentReference vehicleDocumentReference = documentRef.getDocumentReference();
+
+                Driver driver = document.toObject(Driver.class);
+
+                if (driver != null) {
+                    driver.setVehicleId(vehicleDocumentReference);
+
+                    documentReference.set(driver);
+                }
+            }
+            else {
+                throw new ResourceNotFoundException("Document", "DriverId", driverId);
+            }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
-        String vehicleId = "";
-        if (document.exists()) {
-            // Đăng Kí vehicle và trả về vehicleId
-            vehicleId = vehicleServiceClient.registerVehicle(bearerToken, requestRegisterVehicle);
-
-            DocumentRef documentRef = vehicleServiceClient.getDocumentById(bearerToken, vehicleId);
-
-            DocumentReference vehicleDocumentReference = documentRef.getDocumentReference();
-
-            Driver driver = document.toObject(Driver.class);
-
-            if (driver != null) {
-                driver.setVehicleId(vehicleDocumentReference);
-
-                ApiFuture<WriteResult> writeResult = documentReference.set(driver);
-            }
-        }
-        else {
-            throw new ResourceNotFoundException("Document", "DriverId", driverId);
-        }
-
         return vehicleId;
     }
+
+//    private void registerFcmClient(String driverId, String carType) {
+//
+//        DocumentReference documentReference = collectionRefFcmToken.document(driverId);
+//
+//        ApiFuture<DocumentSnapshot> future = documentReference.get();
+//
+//        try {
+//            DocumentSnapshot document = future.get();
+//            if (document.exists()) {
+//
+//                FcmToken fcmToken = document.toObject(FcmToken.class);
+//
+//                if (fcmToken != null) {
+//                    if (carType.equals(VehicleType.VEHICLE_TYPE_CAR_4.name())) {
+//                        fcmToken.setFcmClient(FcmClient.DRIVER_CAR_4.name());
+//                    }
+//                    else if (carType.equals(VehicleType.VEHICLE_TYPE_CAR_7.name())) {
+//                        fcmToken.setFcmClient(FcmClient.DRIVER_CAR_7.name());
+//                    }
+//
+//                    documentReference.set(fcmToken);
+//                }
+//            }
+//        } catch (InterruptedException | ExecutionException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     @Override
     public ResponseStatus checkIn(String bearerToken, RequestCheckIn requestCheckIn) {
@@ -370,7 +397,7 @@ public class DriverServiceImpl implements DriverService {
             document = future.get();
 
             if (document.exists()) {
-                if (Objects.equals(document.get("driverStatus"), 1)) { // 1: OFFLINE
+                if (document.getString("driverStatus").equals(StatusDriver.OFFLINE.name())) { // 1: OFFLINE
 
                     Attendance attendance = Attendance.builder()
                             .checkInAt(requestCheckIn.getCheckInAt())
@@ -380,7 +407,7 @@ public class DriverServiceImpl implements DriverService {
 
                     Driver driver = document.toObject(Driver.class);
 
-                    driver.setDriverStatus(AppConstants.StatusDriver.ONLINE.name());
+                    driver.setDriverStatus(StatusDriver.ONLINE.name());
 
                     ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                             .set(driver);
@@ -443,7 +470,7 @@ public class DriverServiceImpl implements DriverService {
 
                 Driver driver = document.toObject(Driver.class);
 
-                driver.setDriverStatus(AppConstants.StatusDriver.OFFLINE.name());
+                driver.setDriverStatus(StatusDriver.OFFLINE.name());
 
                 ApiFuture<WriteResult> collectionApiFutureDriver = collectionRefDrvier.document(document.getId())
                         .set(driver);
@@ -481,7 +508,7 @@ public class DriverServiceImpl implements DriverService {
 
                 if (driver != null) {
 
-                    AppConstants.StatusDriver statusDriver = AppConstants.StatusDriver.valueOf(status);
+                    StatusDriver statusDriver = StatusDriver.valueOf(status);
 
                     driver.setDriverStatus(statusDriver.name());
 
@@ -543,7 +570,7 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public void subscribeNotification(String bearerToken, String fcmToken) {
+    public void subscribeNotification(String bearerToken, String fcmToken, String carType) {
 
         String idToken = bearerToken.substring(7);
 
@@ -551,9 +578,15 @@ public class DriverServiceImpl implements DriverService {
 
         String uid = decodedToken.getUid();
 
+        String fcmClient = FcmClient.DRIVER_CAR_4.name();
+
+        if (carType.equals(VehicleType.VEHICLE_TYPE_CAR_7.name())) {
+            fcmClient = FcmClient.DRIVER_CAR_7.name();
+        }
+
         FcmToken savedFcmToken = FcmToken.builder()
                 .fcmToken(fcmToken)
-                .fcmClient("DRIVER")
+                .fcmClient(fcmClient)
                 .uid(uid)
                 .build();
 

@@ -1,4 +1,4 @@
-package cabo.backend.callcenter.entity;
+package cabo.backend.bingmap.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FcmToken {
+public class ResponseEstimateCostAndDistance {
 
-    private String fcmToken;
+    private String cost;
 
-    private String fcmClient;
-
-    private String uid;
+    private String distance;
 }

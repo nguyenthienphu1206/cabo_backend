@@ -1,5 +1,6 @@
-package cabo.backend.callcenter.entity;
+package cabo.backend.booking.dto;
 
+import cabo.backend.booking.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,11 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FcmToken {
+public class Address {
 
-    private String fcmToken;
+    private String address;
 
-    private String fcmClient;
-
-    private String uid;
+    private GeoPoint location;
 }

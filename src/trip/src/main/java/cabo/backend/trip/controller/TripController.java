@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class TripController {
 
     private TripService tripService;
@@ -154,6 +154,10 @@ public class TripController {
 
         ResponseStatus responseStatus = tripService.confirmPickupLocationArrival(bearerToken, pickUpLocation);
 
+        if (!responseStatus.getMessage().equals("Successful")) {
+            return new ResponseEntity<>(responseStatus, HttpStatus.BAD_REQUEST);
+        }
+
         return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
@@ -163,17 +167,25 @@ public class TripController {
 
         ResponseStatus responseStatus = tripService.confirmDriverTripCompletion(bearerToken, completionLocation);
 
+        if (!responseStatus.getMessage().equals("Successful")) {
+            return new ResponseEntity<>(responseStatus, HttpStatus.BAD_REQUEST);
+        }
+
         return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
     @PutMapping("/trip/{tripId}")
-    public ResponseEntity<TripDto> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseStatus> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
                                                            @PathVariable("tripId") String tripId,
                                                            @RequestParam("status") String status) {
 
-        TripDto tripDto = tripService.updateTripStatus(bearerToken, tripId, status);
+        ResponseStatus responseStatus = tripService.updateTripStatus(bearerToken, tripId, status);
 
-        return new ResponseEntity<>(tripDto, HttpStatus.OK);
+        if (responseStatus == null) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
     @DeleteMapping("/trip/{tripId}")
