@@ -50,7 +50,7 @@ public class BingMapController {
     public ResponseEntity<Double> calculateDistance(@RequestParam double latitude_1, @RequestParam double longitude_1,
                                                     @RequestParam double latitude_2, @RequestParam double longitude_2) {
         try {
-            Double distance = bingMapService.calculateDistance(latitude_1, longitude_1, latitude_2, longitude_2);
+            double distance = bingMapService.calculateDistance(latitude_1, longitude_1, latitude_2, longitude_2);
 
             return ResponseEntity.ok(distance);
         } catch (Exception e) {

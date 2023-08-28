@@ -15,7 +15,7 @@ public interface BingMapService {
 
     List<ResponseListAddresses> getRealPlacesBySearchQuery(String query);
 
-    Double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2);
+    double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2);
 
     TravelInfor getDistanceAndTime(double latitude_1, double longitude_1, double latitude_2, double longitude_2);
 

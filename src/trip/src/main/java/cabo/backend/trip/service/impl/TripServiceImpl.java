@@ -554,16 +554,24 @@ public class TripServiceImpl implements TripService {
                 if (trip != null) {
                     GeoPoint customerOrderLocation = trip.getCustomerOrderLocation();
 
-                    Double distance = bingMapServiceClient.calculateDistance(pickUpLocation.getCurrentLocation().getLatitude(),
+                    TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(pickUpLocation.getCurrentLocation().getLatitude(),
                             pickUpLocation.getCurrentLocation().getLongitude(),
                             customerOrderLocation.getLatitude(),
                             customerOrderLocation.getLongitude());
 
+                    double distance = travelInfor.getTravelDistance();
+
+                    log.info("distance: " + distance);
+                    log.info("currentLocation: " + pickUpLocation.getCurrentLocation());
+                    log.info("customerLocation: " + customerOrderLocation);
+
                     if (distance > 0.1) {
+                        log.info("Pick_up_failed");
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Failed, too far from pick up location");
                     }
                     else {
+                        log.info("Pick_up_successful");
                         long currentTime = Instant.now().getEpochSecond();
                         trip.setPickUpTime(currentTime);
                         trip.setStatus(StatusTrip.TRIP_STATUS_INPROGRESS.name());
@@ -610,19 +618,22 @@ public class TripServiceImpl implements TripService {
                 if (trip != null) {
                     GeoPoint customerOrderLocation = trip.getCustomerOrderLocation();
 
-                    Double distance = bingMapServiceClient.calculateDistance(completionLocation.getCurrentLocation().getLatitude(),
+                    TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(completionLocation.getCurrentLocation().getLatitude(),
                             completionLocation.getCurrentLocation().getLongitude(),
                             customerOrderLocation.getLatitude(),
                             customerOrderLocation.getLongitude());
+
+                    double distance = travelInfor.getTravelDistance();
 
                     if (distance > 0.05) {
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Failed, too far from completed location");
                     }
                     else {
-                        trip.setPickUpTime(Instant.now().getEpochSecond());
+                        long currentTime = Instant.now().getEpochSecond();
+                        trip.setEndTime(currentTime);
                         trip.setStatus(StatusTrip.TRIP_STATUS_DONE.name());
-                        trip.setUpdatedAt(Instant.now().getEpochSecond());
+                        trip.setUpdatedAt(currentTime);
                         documentReference.set(trip);
 
                         NotificationDriveDone notificationDriveDone = NotificationDriveDone.builder()
@@ -633,7 +644,7 @@ public class TripServiceImpl implements TripService {
                         sendStatusEventToStatusQueue(bearerToken, documentReference.getId());
 
                         // send to drive-status,then send to customer
-                        //rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriveDone);
+                        rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriveDone);
 
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Successful");
@@ -802,8 +813,10 @@ public class TripServiceImpl implements TripService {
 
     private String getFcmTokenCustomer(String customerId) {
 
+        String uid = customerServiceClient.getUidByCustomerId(customerId);
+
         Query query = collectionRefFcmToken.whereEqualTo("fcmClient", FcmClient.CUSTOMER.name())
-                .whereEqualTo("uid", customerId);
+                .whereEqualTo("uid", uid);
 
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
 

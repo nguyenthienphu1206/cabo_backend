@@ -23,6 +23,6 @@ public interface CustomerServiceClient {
     CustomerDto getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                    @PathVariable("id") String customerId);
 
-    @GetMapping("/api/v1/{customerId}/uid")
+    @GetMapping("/api/v1/customer/{customerId}/uid")
     String getUidByCustomerId(@PathVariable("customerId") String customerId);
 }

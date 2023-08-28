@@ -68,6 +68,12 @@ public class BookingServiceImpl implements BookingService {
     @Value("${rabbitmq.binding.status_customer.routing.key}")
     private String statusCustomerRoutingKey;
 
+    @Value("${rabbitmq.exchange.gps.name}")
+    private String gpsExchange;
+
+    @Value("${rabbitmq.binding.gps.routing.key}")
+    private String gpsRoutingKey;
+
     private final RabbitTemplate rabbitTemplate;
 
     public BookingServiceImpl(RabbitTemplate rabbitTemplate, Firestore firestore) {
@@ -108,7 +114,7 @@ public class BookingServiceImpl implements BookingService {
 
     private void sendTripReceivedNotification(String driverId) {
 
-        NotificationDto notificationDto = new NotificationDto();
+        NotificationDto notificationDto = new NotificationDto("", "");
 
         List<String> fcmTokens = getAllDeviceTokensDriver();
 
@@ -185,6 +191,30 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public void sendGPSToServer(RequestUpdateGPSInDrive requestUpdateGPSInDrive) {
+
+        rabbitTemplate.convertAndSend(gpsExchange, gpsRoutingKey, requestUpdateGPSInDrive);
+    }
+
+    @RabbitListener(queues = "${rabbitmq.queue.gps.name}")
+    private void sendDistanceAndTimeToCustomer(RequestUpdateGPSInDrive requestUpdateGPSInDrive) {
+
+        GeoPoint customerOrderLocation = requestUpdateGPSInDrive.getCustomerOrderLocation();
+        GeoPoint driverLocation = requestUpdateGPSInDrive.getCurrentLocation();
+
+        TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(
+                customerOrderLocation.getLatitude(),
+                customerOrderLocation.getLongitude(),
+                driverLocation.getLatitude(),
+                driverLocation.getLongitude()
+        );
+
+        log.info("sendDistanceAndTimeToCustomer: ---> " + travelInfor);
+
+        sendDistanceAndTimeToQueue(requestUpdateGPSInDrive.getCustomerId(), travelInfor);
+    }
+
+    @Override
     public ResponseDriverInformation getDriverInformation(String bearerToken, String customerId, RequestBookADrive requestBooking) {
 
         String idToken = bearerToken.substring(7);
@@ -218,13 +248,8 @@ public class BookingServiceImpl implements BookingService {
                     // Gửi thông báo đã có người nhận cuốc đến tất cả người còn lại
                     sendTripReceivedNotification(driverId);
 
-                    // send distance and time to customer
-                    sendDistanceAndTimeToCustomer(bearerToken, tripId, driverId, customerId, requestBooking.getCustomerOrderLocation());
-
                     // Update driver status
                     driverServiceClient.updateDriverStatus(bearerToken, driverId, StatusDriver.BUSY.name());
-
-                    log.info("Test: getDriverInformationFromDB");
                 }
             }
             return responseDriverInformation;
@@ -272,47 +297,6 @@ public class BookingServiceImpl implements BookingService {
         return tripServiceClient.getTripStatusById(bearerToken, tripId);
     }
 
-    private void sendDistanceAndTimeToCustomer(String bearerToken, String tripId, String driverId, String customerId, GeoPoint customerOrderLocation) {
-
-        CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-
-            DocumentReference documentReference = collectionRefGPS.document(driverId);
-
-            ApiFuture<DocumentSnapshot> future = documentReference.get();
-
-            com.google.cloud.firestore.GeoPoint driverLocation;
-
-            try {
-                DocumentSnapshot document = future.get();
-
-                if (document.exists()) {
-                    driverLocation = document.getGeoPoint("currentLocation");
-
-                    if (driverLocation != null) {
-                        while (getTripStatus(bearerToken, tripId).equals(StatusTrip.TRIP_STATUS_PICKING.name())) {
-
-                            TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(
-                                    customerOrderLocation.getLatitude(),
-                                    customerOrderLocation.getLongitude(),
-                                    driverLocation.getLatitude(),
-                                    driverLocation.getLongitude()
-                            );
-
-                            sendDistanceAndTimeToQueue(customerId, travelInfor);
-
-                            Thread.sleep(3000);
-
-                        }
-                    }
-                }
-                else {
-                    throw new ResourceNotFoundException("Driver", "DriverId", driverId);
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
 
     private ResponseDriverInformation getDriverInformationFromDB(String bearerToken, String driverId, String tripId) {
 
@@ -387,7 +371,7 @@ public class BookingServiceImpl implements BookingService {
             for (int i = 0; i < 2; i++) {
 
                 suitableDriverUid = getListOfSuitableDriverUid(customerOrderLocation, x, x + 2.0);
-
+                x += 2;
                 listOfFcmTokens = getListOfFcmToken(suitableDriverUid, carType);
 
                 log.info("List Of Fcm: " + listOfFcmTokens);
@@ -398,12 +382,12 @@ public class BookingServiceImpl implements BookingService {
                     continue;
                 }
 
-                long endTime = System.currentTimeMillis() + 10000;
+                long endTime = System.currentTimeMillis() + 15000;
 
                 while (System.currentTimeMillis() < endTime) {
 
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(1500);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -414,8 +398,6 @@ public class BookingServiceImpl implements BookingService {
                         return driverId;
                     }
                 }
-
-                x += 2;
             }
             return null;
         });
@@ -438,8 +420,6 @@ public class BookingServiceImpl implements BookingService {
             BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
 
             List<SendResponse> successResponses = response.getResponses();
-
-            log.info("---> successResponses: " + successResponses);
             // Xử lý kết quả (nếu cần)
         } catch (FirebaseMessagingException e) {
             throw new RuntimeException(e);
@@ -486,6 +466,7 @@ public class BookingServiceImpl implements BookingService {
 
         CustomerDto customerDto = customerServiceClient.getCustomerDetails(bearerToken, customerId);
         CustomerInfo customerInfo = CustomerInfo.builder()
+                .customerId(customerId)
                 .fullName(customerDto.getFullName())
                 .phoneNumber(customerDto.getPhoneNumber())
                 .avatar(customerDto.getAvatar())
@@ -594,7 +575,6 @@ public class BookingServiceImpl implements BookingService {
 
     private void sendDistanceAndTimeToQueue(String customerId, TravelInfor travelInfor) {
 
-        log.info("getFcmTokenCustomer --> ");
         String fcmToken = getFcmTokenCustomer(customerId);
 
         String driverRemainingDistance;
@@ -615,7 +595,6 @@ public class BookingServiceImpl implements BookingService {
                 .driverRemainingTime(driverRemainingTime)
                 .build();
 
-        log.info("convertAndSend");
         // Send event to status queue
         rabbitTemplate.convertAndSend(statusExchange, statusCustomerRoutingKey, travelInfoToCustomer);
     }
@@ -630,9 +609,8 @@ public class BookingServiceImpl implements BookingService {
 
     private String getFcmTokenCustomer(String customerId) {
 
-        log.info("uid trong fcm");
         String uid = customerServiceClient.getUidByCustomerId(customerId);
-        log.info("uid ---> " + uid);
+
         Query query = collectionRefFcmToken.whereEqualTo("fcmClient", FcmClient.CUSTOMER.name())
                 .whereEqualTo("uid", uid);
 
@@ -640,13 +618,11 @@ public class BookingServiceImpl implements BookingService {
 
         QuerySnapshot querySnapshot;
 
-        log.info("CustomerId ----> " + customerId);
-
         try {
             querySnapshot = querySnapshotFuture.get();
             if (!querySnapshot.isEmpty()) {
                 QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.getDocuments().get(0);
-                log.info("FCMTOKEN ----> " + queryDocumentSnapshot.getString("fcmToken"));
+
                 return queryDocumentSnapshot.getString("fcmToken");
             }
 
@@ -671,7 +647,7 @@ public class BookingServiceImpl implements BookingService {
 
                 if (time != null && currentTime - time >= 60) {
 
-                    NotificationDto notificationDto = new NotificationDto();
+                    NotificationDto notificationDto = new NotificationDto("", "");
 
                     Map<String, String> data = new HashMap<>();
                     data.put("category", "REQUEST_GPS");
@@ -683,7 +659,6 @@ public class BookingServiceImpl implements BookingService {
                         return false;
                     }
                     sendNotificationToSuitableDriver(fcmTokenOnlineDrivers, notificationDto, data);
-
 
                     log.info("Test: sendNotificationToSuitableDriver");
 

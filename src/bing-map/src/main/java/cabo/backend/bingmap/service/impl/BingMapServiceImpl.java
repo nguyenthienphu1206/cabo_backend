@@ -153,29 +153,40 @@ public class BingMapServiceImpl implements BingMapService {
     }
 
     @Override
-    public Double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2) {
+    public double calculateDistance(double latitude_1, double longitude_1, double latitude_2, double longitude_2) {
 
         String BING_MAPS_API_URL = "https://dev.virtualearth.net/REST/v1/Routes/DistanceMatrix";
 
         String url = String.format("%s?origins=%f,%f&destinations=%f,%f&travelMode=driving&key=%s",
                 BING_MAPS_API_URL, latitude_1, longitude_1, latitude_2, longitude_2, apiKey);
 
-        BingMapsResponse response = webClient.get()
+        String response = webClient.get()
                 .uri(url)
                 .retrieve()
-                .bodyToMono(BingMapsResponse.class)
+                .bodyToMono(String.class)
                 .block();
 
         log.info("Response: " + response);
 
-        if (response != null) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-            Double distance = response.getResourceSets().get(0)
-                    .getResources().get(0)
-                    .getResults().get(0)
-                    .getTravelDistance();
+            JsonNode responseJson = objectMapper.readTree(response);
 
-            return distance;
+            JsonNode resourceSets = responseJson.get("resourceSets");
+            if (resourceSets.isArray() && resourceSets.size() > 0) {
+                JsonNode resources = resourceSets.get(0).get("resources");
+                if (resources.isArray() && resources.size() > 0) {
+
+                    for (JsonNode resource : resources) {
+                        JsonNode results = resource.get("results");
+
+                        return results.get(0).path("travelDistance").asDouble(0);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return 0.0;
@@ -233,7 +244,7 @@ public class BingMapServiceImpl implements BingMapService {
         double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
         double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
 
-        double distance = calculateDistance(fromLat, fromLon, toLat, toLon) * 1.0D;
+        double distance = calculateDistance(fromLat, fromLon, toLat, toLon);
 
         double estimateCost = getEstimateCost(distance) * 1.0D;
 

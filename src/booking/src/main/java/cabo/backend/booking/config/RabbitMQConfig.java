@@ -15,11 +15,20 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.status_customer.name}")
     private String statusCustomerQueue;
 
+    @Value("${rabbitmq.queue.gps.name}")
+    private String gpsQueue;
+
     @Value("${rabbitmq.exchange.status.name}")
     private String statusExchange;
 
+    @Value("${rabbitmq.exchange.gps.name}")
+    private String gpsExchange;
+
     @Value("${rabbitmq.binding.status_customer.routing.key}")
     private String statusCustomerRoutingKey;
+
+    @Value("${rabbitmq.binding.gps.routing.key}")
+    private String gpsRoutingKey;
 
     // spring bean for queue
     @Bean
@@ -27,10 +36,20 @@ public class RabbitMQConfig {
         return new Queue(statusCustomerQueue);
     }
 
+    @Bean
+    public Queue gpsQueue() {
+        return new Queue(gpsQueue);
+    }
+
     // spring bean for exchange
     @Bean
     public TopicExchange statusExchange() {
         return new TopicExchange(statusExchange);
+    }
+
+    @Bean
+    public TopicExchange gpsExchange() {
+        return new TopicExchange(gpsExchange);
     }
 
     // spring bean for binding between exchange and queue using routing key
@@ -41,6 +60,14 @@ public class RabbitMQConfig {
                 .bind(statusCustomerQueue())
                 .to(statusExchange())
                 .with(statusCustomerRoutingKey);
+    }
+
+    @Bean
+    public Binding gpsBinding() {
+        return BindingBuilder
+                .bind(gpsQueue())
+                .to(gpsExchange())
+                .with(gpsRoutingKey);
     }
 
     // message converter
