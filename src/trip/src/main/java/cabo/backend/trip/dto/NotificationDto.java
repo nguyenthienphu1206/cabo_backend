@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class NotificationDriveDone {
+@AllArgsConstructor
+public class NotificationDto {
 
-    private String fcmToken;
+    private String title;
 
-    private String tripId;
+    private String body;
 }

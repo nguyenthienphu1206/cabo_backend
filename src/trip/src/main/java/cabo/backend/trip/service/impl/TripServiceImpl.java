@@ -62,6 +62,7 @@ public class TripServiceImpl implements TripService {
     @Value("${rabbitmq.binding.status.routing.key}")
     private String statusRoutingKey;
 
+
     private final RabbitTemplate rabbitTemplate;
 
     public  TripServiceImpl(Firestore dbFirestore, RabbitTemplate rabbitTemplate) {
@@ -561,10 +562,6 @@ public class TripServiceImpl implements TripService {
 
                     double distance = travelInfor.getTravelDistance();
 
-                    log.info("distance: " + distance);
-                    log.info("currentLocation: " + pickUpLocation.getCurrentLocation());
-                    log.info("customerLocation: " + customerOrderLocation);
-
                     if (distance > 0.1) {
                         log.info("Pick_up_failed");
                         responseStatus.setTimestamp(new Date());
@@ -578,7 +575,18 @@ public class TripServiceImpl implements TripService {
                         trip.setUpdatedAt(currentTime);
                         documentReference.set(trip);
 
+                        NotificationDriverStatus notificationDriverArrived = NotificationDriverStatus.builder()
+                                .status(StatusTrip.TRIP_STATUS_PICKING.name())
+                                .fcmToken(getFcmTokenCustomer(trip.getCustomerId()))
+                                .tripId(document.getId())
+                                .notificationDto(new NotificationDto("The driver has arrived",
+                                        "Hope you enjoy your journey."))
+                                .build();
+
                         sendStatusEventToStatusQueue(bearerToken, documentReference.getId());
+
+                        // send to drive-status,then send to customer
+                        rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriverArrived);
 
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Successful");
@@ -636,15 +644,18 @@ public class TripServiceImpl implements TripService {
                         trip.setUpdatedAt(currentTime);
                         documentReference.set(trip);
 
-                        NotificationDriveDone notificationDriveDone = NotificationDriveDone.builder()
+                        NotificationDriverStatus notificationDriverDone = NotificationDriverStatus.builder()
+                                .status(StatusTrip.TRIP_STATUS_DONE.name())
                                 .fcmToken(getFcmTokenCustomer(trip.getCustomerId()))
                                 .tripId(document.getId())
+                                .notificationDto(new NotificationDto("Your trip has ended",
+                                        "Thank you for trusting us.."))
                                 .build();
 
                         sendStatusEventToStatusQueue(bearerToken, documentReference.getId());
 
                         // send to drive-status,then send to customer
-                        rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriveDone);
+                        rabbitTemplate.convertAndSend(statusExchange, statusDoneRoutingKey, notificationDriverDone);
 
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Successful");

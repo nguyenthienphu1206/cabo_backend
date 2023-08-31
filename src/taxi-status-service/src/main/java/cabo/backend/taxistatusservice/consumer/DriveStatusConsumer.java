@@ -2,6 +2,7 @@ package cabo.backend.taxistatusservice.consumer;
 
 import cabo.backend.taxistatusservice.dto.*;
 import cabo.backend.taxistatusservice.service.TripServiceClient;
+import cabo.backend.taxistatusservice.utils.StatusTrip;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,23 +58,17 @@ public class DriveStatusConsumer {
         }
     }
 
-//    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
-//    public void consumeDriveStatusDoneToCustomer(NotificationDriveDone notificationDriveDone) {
-//
-//        // Tạo notification
-//        NotificationDto notificationDto = NotificationDto.builder()
-//                .title("Your trip has ended")
-//                .body("Thank you for trusting us.")
-//                .build();
-//
-//        // Lấy data
-//        Map<String, String> data = createDataStatusDone(notificationDriveDone);
-//
-//        // Gửi notification về phía tổng đài
-//        if (!notificationDriveDone.getFcmToken().equals("")) {
-//            sendNotification(notificationDto, notificationDriveDone.getFcmToken(), data);
-//        }
-//    }
+    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
+    public void consumeDriveStatusDoneToCustomer(NotificationDriverStatus notificationDriveDone) {
+
+        // Lấy data
+        Map<String, String> data = createDataDriverStatus(notificationDriveDone.getStatus(), notificationDriveDone.getTripId());
+
+        // Gửi notification về phía tổng đài
+        if (!notificationDriveDone.getFcmToken().equals("")) {
+            sendNotification(notificationDriveDone.getNotificationDto(), notificationDriveDone.getFcmToken(), data);
+        }
+    }
 
     private FirebaseToken decodeToken(String idToken) {
 
@@ -139,12 +134,23 @@ public class DriveStatusConsumer {
         return data;
     }
 
-    private Map<String, String> createDataStatusDone(NotificationDriveDone notificationDriveDone) {
+    private Map<String, String> createDataDriverStatus(String status, String tripId) {
 
         Map<String, String> data = new HashMap<>();
 
-        data.put("category", "INFORM_TRIP_DONE");
-        data.put("tripId", notificationDriveDone.getTripId());
+        StatusTrip statusTrip = StatusTrip.valueOf(status);
+
+        switch (statusTrip) {
+            case TRIP_STATUS_PICKING:
+                data.put("category", "INFORM_DRIVER_ARRIVED");
+                break;
+
+            case TRIP_STATUS_DONE:
+                data.put("category", "INFORM_TRIP_DONE");
+                break;
+        }
+
+        data.put("tripId", tripId);
 
         return data;
     }
