@@ -50,6 +50,26 @@ public class BookingController {
         }
     }
 
+    @PostMapping("/current-gps")
+    public ResponseEntity<ResponseStatus> sendGPS(@RequestBody RequestUpdateGPSInDrive requestUpdateGPSInDrive) {
+
+        ResponseStatus responseStatus;
+
+        try {
+            bookingService.sendGPSToServer(requestUpdateGPSInDrive);
+
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+
+            responseStatus = new ResponseStatus(new Date(), e.getMessage());
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/drive-booking/confirm/{customerId}")
     public ResponseEntity<ResponseDriverInformation> getDriverInformation(@RequestHeader("Authorization") String bearerToken,
                                                                           @PathVariable("customerId") String customerId,

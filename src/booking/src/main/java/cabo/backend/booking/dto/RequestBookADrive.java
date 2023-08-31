@@ -18,9 +18,9 @@ public class RequestBookADrive {
 
     private String customerPhoneNumber;
 
-    private double distance;
+    private String distance;
 
-    private long cost;
+    private String cost;
 
     private String carType;
 

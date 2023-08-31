@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class TripController {
 
     private TripService tripService;
@@ -126,11 +126,24 @@ public class TripController {
         return new ResponseEntity<>(driverId, HttpStatus.OK);
     }
 
-    @PostMapping("/trip/drive-booking/accept-drive")
-    public ResponseEntity<ResponseStatus> sendReceivedDriverInfo(@RequestHeader("Authorization") String bearerToken,
-                                                                 @RequestBody RequestReceivedDriverInfo requestReceivedDriverInfo) {
+    @GetMapping("/trip/{tripId}/status")
+    public ResponseEntity<String> getTripStatusById(@RequestHeader("Authorization") String bearerToken,
+                                                    @PathVariable("tripId") String tripId) {
 
-        ResponseStatus responseStatus = tripService.sendReceivedDriverInfo(bearerToken, requestReceivedDriverInfo);
+        String status = tripService.getTripStatusById(bearerToken, tripId);
+
+        return new ResponseEntity<>(status, HttpStatus.OK);
+    }
+
+    @PostMapping("/trip/drive-booking/accept-drive")
+    public ResponseEntity<ResponseStatus> acceptDrive(@RequestHeader("Authorization") String bearerToken,
+                                                      @RequestBody RequestReceivedDriverInfo requestReceivedDriverInfo) {
+
+        ResponseStatus responseStatus = tripService.acceptDrive(bearerToken, requestReceivedDriverInfo);
+
+        if (!responseStatus.getMessage().equals("Successful")) {
+            return new ResponseEntity<>(responseStatus, HttpStatus.NOT_FOUND);
+        }
 
         return new ResponseEntity<>(responseStatus, HttpStatus.CREATED);
     }
@@ -141,6 +154,10 @@ public class TripController {
 
         ResponseStatus responseStatus = tripService.confirmPickupLocationArrival(bearerToken, pickUpLocation);
 
+        if (!responseStatus.getMessage().equals("Successful")) {
+            return new ResponseEntity<>(responseStatus, HttpStatus.BAD_REQUEST);
+        }
+
         return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
@@ -150,17 +167,25 @@ public class TripController {
 
         ResponseStatus responseStatus = tripService.confirmDriverTripCompletion(bearerToken, completionLocation);
 
+        if (!responseStatus.getMessage().equals("Successful")) {
+            return new ResponseEntity<>(responseStatus, HttpStatus.BAD_REQUEST);
+        }
+
         return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
     @PutMapping("/trip/{tripId}")
-    public ResponseEntity<TripDto> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+    public ResponseEntity<ResponseStatus> updateTripStatus(@RequestHeader("Authorization") String bearerToken,
                                                            @PathVariable("tripId") String tripId,
                                                            @RequestParam("status") String status) {
 
-        TripDto tripDto = tripService.updateTripStatus(bearerToken, tripId, status);
+        ResponseStatus responseStatus = tripService.updateTripStatus(bearerToken, tripId, status);
 
-        return new ResponseEntity<>(tripDto, HttpStatus.OK);
+        if (responseStatus == null) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(responseStatus, HttpStatus.OK);
     }
 
     @DeleteMapping("/trip/{tripId}")
@@ -171,6 +196,23 @@ public class TripController {
 
         try {
             tripService.deleteTrip(bearerToken, tripId);
+
+            responseStatus = new ResponseStatus(new Date(), "Successfully");
+
+            return new ResponseEntity<>(responseStatus, HttpStatus.OK);
+        } catch (Exception e) {
+
+            throw new RuntimeException(e);
+        }
+    }
+
+    @DeleteMapping("/trip")
+    public ResponseEntity<ResponseStatus> deleteAllTrips() {
+
+        ResponseStatus responseStatus;
+
+        try {
+            tripService.deleteAllTrips();
 
             responseStatus = new ResponseStatus(new Date(), "Successfully");
 

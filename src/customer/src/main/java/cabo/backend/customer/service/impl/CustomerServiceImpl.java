@@ -17,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -94,13 +97,67 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
+    public String getUidByCustomerId(String customerId) {
+
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        String uid;
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+                uid = document.getString("uid");
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return uid;
+    }
+
+    @Override
+    public ResponseFullNameAndPhone getNameAndPhoneByCustomerId(String bearerToken, String customerId) {
 
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
 
-        //String uid = decodedToken.getUid();
+        DocumentReference documentReference = collectionRefCustomer.document(customerId);
+
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+
+            if (document.exists()) {
+
+                return ResponseFullNameAndPhone.builder()
+                        .fullName(document.getString("fullName"))
+                        .phoneNumber(document.getString("phoneNumber"))
+                        .build();
+            }
+            else {
+                throw new ResourceNotFoundException("Customer", "CustomerId", customerId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public String registerCustomer(String bearerToken, RequestRegisterCustomer requestRegisterCustomer) {
+
+        String idToken = bearerToken.substring(7);
+
+        FirebaseToken decodedToken = decodeToken(idToken);
+
+        String uid = decodedToken.getUid();
         //log.info("UID -----> " + uid);
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", requestRegisterCustomer.getPhoneNumber());
@@ -116,7 +173,7 @@ public class CustomerServiceImpl implements CustomerService {
                 log.info("Empty");
 
                 Customer customer = Customer.builder()
-                        //.uid(uid)
+                        .uid(uid)
                         .fullName(requestRegisterCustomer.getFullName())
                         .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                         .avatar("")
@@ -137,7 +194,7 @@ public class CustomerServiceImpl implements CustomerService {
                 if (Boolean.FALSE.equals(isRegisteredOnApp)) {
 
                     Customer customerInDB = Customer.builder()
-                            //.uid(uid)
+                            .uid(uid)
                             .fullName(requestRegisterCustomer.getFullName())
                             .phoneNumber(requestRegisterCustomer.getPhoneNumber())
                             .avatar("")
@@ -164,8 +221,6 @@ public class CustomerServiceImpl implements CustomerService {
         String idToken = bearerToken.substring(7);
 
         //FirebaseToken decodedToken = decodeToken(idToken);
-
-        //String uid = decodedToken.getUid();
 
         Query query = collectionRefCustomer.whereEqualTo("phoneNumber", phoneNumber);
         ApiFuture<QuerySnapshot> querySnapshotFuture = query.get();
@@ -321,31 +376,6 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public ResponseEstimateCostAndDistance getEstimateCostAndDistance(String bearerToken,
-                                                                      RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
-
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        double fromLat = requestOriginsAndDestinationsLocation.getFromLocation().getLatitude();
-        double fromLon = requestOriginsAndDestinationsLocation.getFromLocation().getLongitude();
-        double toLat = requestOriginsAndDestinationsLocation.getToLocation().getLatitude();
-        double toLon = requestOriginsAndDestinationsLocation.getToLocation().getLongitude();
-
-        Double distance = bingMapServiceClient.calculateDistance(fromLat, fromLon, toLat, toLon);
-
-        Double estimateCost = getEstimateCost(distance);
-
-        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = ResponseEstimateCostAndDistance.builder()
-                .cost(estimateCost)
-                .distance(distance)
-                .build();
-
-        return responseEstimateCostAndDistance;
-    }
-
-    @Override
     public ResponseDriverInformation bookADrive(String bearerToken, String customerId, RequestBookADrive requestBookADrive) {
 
         ResponseDriverInformation responseDriverInformation = bookingServiceClient.getDriverInformation(bearerToken, customerId, requestBookADrive);
@@ -386,18 +416,5 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return decodedToken;
-    }
-
-    private Double getEstimateCost(Double distance) {
-
-        double baseCostPerKm = 4300.0;
-
-        double cost = 12500.0;
-
-        if (distance > 2.0) {
-            cost += baseCostPerKm * (distance - 2.0);
-        }
-
-        return cost;
     }
 }

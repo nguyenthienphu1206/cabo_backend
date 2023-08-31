@@ -12,19 +12,33 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${rabbitmq.queue.status.name}")
-    private String statusQueue;
+    @Value("${rabbitmq.queue.status_customer.name}")
+    private String statusCustomerQueue;
+
+    @Value("${rabbitmq.queue.gps.name}")
+    private String gpsQueue;
 
     @Value("${rabbitmq.exchange.status.name}")
     private String statusExchange;
 
-    @Value("${rabbitmq.binding.status.routing.key}")
-    private String statusRoutingKey;
+    @Value("${rabbitmq.exchange.gps.name}")
+    private String gpsExchange;
+
+    @Value("${rabbitmq.binding.status_customer.routing.key}")
+    private String statusCustomerRoutingKey;
+
+    @Value("${rabbitmq.binding.gps.routing.key}")
+    private String gpsRoutingKey;
 
     // spring bean for queue
     @Bean
-    public Queue statusQueue() {
-        return new Queue(statusQueue);
+    public Queue statusCustomerQueue() {
+        return new Queue(statusCustomerQueue);
+    }
+
+    @Bean
+    public Queue gpsQueue() {
+        return new Queue(gpsQueue);
     }
 
     // spring bean for exchange
@@ -33,13 +47,27 @@ public class RabbitMQConfig {
         return new TopicExchange(statusExchange);
     }
 
-    // spring bean for binding between exchange and queue using routing key
     @Bean
-    public Binding statusBinding() {
+    public TopicExchange gpsExchange() {
+        return new TopicExchange(gpsExchange);
+    }
+
+    // spring bean for binding between exchange and queue using routing key
+
+    @Bean
+    public Binding statusCustomerBinding() {
         return BindingBuilder
-                .bind(statusQueue())
+                .bind(statusCustomerQueue())
                 .to(statusExchange())
-                .with(statusRoutingKey);
+                .with(statusCustomerRoutingKey);
+    }
+
+    @Bean
+    public Binding gpsBinding() {
+        return BindingBuilder
+                .bind(gpsQueue())
+                .to(gpsExchange())
+                .with(gpsRoutingKey);
     }
 
     // message converter

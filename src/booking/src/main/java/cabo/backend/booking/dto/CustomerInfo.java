@@ -9,8 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 public class CustomerInfo {
 
+    private String customerId;
     private String fullName;
     private String phoneNumber;
     private String avatar;
-    private Boolean vip;
 }

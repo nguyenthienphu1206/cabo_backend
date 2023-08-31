@@ -1,6 +1,5 @@
-package cabo.backend.driver.dto;
+package cabo.backend.trip.dto;
 
-import cabo.backend.driver.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,11 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestReceivedDriverInfo {
+public class DriveStatus {
 
-    private String driverId;
+    private String fcmToken;
 
     private String tripId;
 
-    private GeoPoint currentLocation;
+    private TripDto tripDto;
 }

@@ -2,7 +2,7 @@ package cabo.backend.driver.service.impl;
 
 import cabo.backend.driver.entity.Attendance;
 import cabo.backend.driver.entity.Driver;
-import cabo.backend.driver.utils.AppConstants;
+import cabo.backend.driver.utils.StatusDriver;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -91,7 +91,7 @@ public class BackgroundService {
                 driver = document.toObject(Driver.class);
 
                 if (driver != null) {
-                    driver.setDriverStatus(AppConstants.StatusDriver.OFFLINE.name());
+                    driver.setDriverStatus(StatusDriver.OFFLINE.name());
 
                     ApiFuture<WriteResult> writeResult = documentReferenceDriver.set(driver);
 

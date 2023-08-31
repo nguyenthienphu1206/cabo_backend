@@ -43,17 +43,17 @@ public class CallCenterServiceImpl implements CallCenterService {
 
         String idToken = bearerToken.substring(7);
 
-//        FirebaseToken decodedToken = decodeToken(idToken);
-//
-//        String uid = decodedToken.getUid();
+        FirebaseToken decodedToken = decodeToken(idToken);
+
+        String uid = decodedToken.getUid();
 
         FcmToken savedFcmToken = FcmToken.builder()
                 .fcmToken(fcmToken)
-                .isDriver(false)
-                //.uid(uid)
+                .fcmClient("CALL_CENTER")
+                .uid(uid)
                 .build();
 
-        collectionRefFcmToken.document().set(savedFcmToken);
+        collectionRefFcmToken.document(uid).set(savedFcmToken);
     }
 
     @Override

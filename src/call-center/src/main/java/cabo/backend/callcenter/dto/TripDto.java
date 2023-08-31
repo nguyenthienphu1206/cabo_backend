@@ -1,6 +1,5 @@
 package cabo.backend.callcenter.dto;
 
-import cabo.backend.callcenter.entity.GeoPoint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TripDto {
+
+    private String tripId;
 
     private long cost;
 
@@ -26,11 +27,13 @@ public class TripDto {
 
     private long endTime;
 
-    private GeoPoint customerOrderLocation;
+    private String customerOrderLocation;
 
-    private GeoPoint driverStartLocation;
+    private String driverStartLocation;
 
-    private GeoPoint toLocation;
+    private String toLocation;
+
+    private String customerPhoneNumber;
 
     private int paymentType;
 

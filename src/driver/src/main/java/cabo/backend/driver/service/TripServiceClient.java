@@ -1,10 +1,8 @@
 package cabo.backend.driver.service;
 
 import cabo.backend.driver.dto.*;
-import cabo.backend.driver.dto.ResponseStatus;
 import cabo.backend.driver.entity.GeoPoint;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +32,4 @@ public interface TripServiceClient {
     ResponseAverageIncomePerDrive getAverageIncomePerDrive(@RequestHeader("Authorization") String bearerToken,
                                                            @PathVariable("driverId") String driverId);
 
-    @PostMapping("/api/v1/trip/drive-booking/accept-drive")
-    ResponseStatus sendReceivedDriverInfo(@RequestHeader("Authorization") String bearerToken,
-                                          @RequestBody RequestReceivedDriverRefInfo requestReceivedDriverRefInfo);
 }

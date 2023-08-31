@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseEstimateCostAndDistance {
 
-    private Double cost;
+    private String cost;
 
-    private Double distance;
+    private String distance;
 }

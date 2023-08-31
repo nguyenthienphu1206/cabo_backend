@@ -2,6 +2,7 @@ package cabo.backend.booking.service;
 
 import cabo.backend.booking.dto.DocumentRef;
 import cabo.backend.booking.dto.DriverInfo;
+import cabo.backend.booking.dto.ResponseStatus;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +18,6 @@ public interface DriverServiceClient {
                                  @RequestParam String tripId,
                                  @RequestParam String driverId);
 
-    @GetMapping("/api/v1/driver/{driverId}/get-uid")
-    String getUidByDriverId(@RequestHeader("Authorization") String bearerToken,
-                            @PathVariable("driverId") String driverId);
 
     @GetMapping("/api/v1/driver/get-driver-status")
     String getDriverStatusIntByUid(@RequestParam String uid);

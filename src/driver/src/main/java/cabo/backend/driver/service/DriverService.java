@@ -32,9 +32,7 @@ public interface DriverService {
 
     ResponseOverview getOverview(String idToken, String driverId);
 
-    void subscribeNotification(String bearerToken, String fcmToken);
-
-    ResponseStatus sendReceivedDriverInfo(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
+    void subscribeNotification(String bearerToken, String fcmToken, String carType);
 
     ResponseStatus sendGPS(String bearerToken, RequestGPS requestGPS);
 }

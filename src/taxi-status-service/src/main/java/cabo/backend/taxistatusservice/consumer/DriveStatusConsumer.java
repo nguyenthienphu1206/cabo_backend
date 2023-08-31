@@ -1,9 +1,10 @@
 package cabo.backend.taxistatusservice.consumer;
 
-import cabo.backend.taxistatusservice.dto.DriveStatus;
-import cabo.backend.taxistatusservice.dto.NotificationDto;
-import cabo.backend.taxistatusservice.dto.TripDto;
+import cabo.backend.taxistatusservice.dto.*;
 import cabo.backend.taxistatusservice.service.TripServiceClient;
+import cabo.backend.taxistatusservice.utils.StatusTrip;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -26,29 +27,46 @@ public class DriveStatusConsumer {
     @RabbitListener(queues = "${rabbitmq.queue.status.name}")
     public void consumeDriveStatus(DriveStatus driveStatus) {
 
-        String bearerToken = driveStatus.getBearerToken();
-
         log.info("Status");
 
-        String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
-
-        // Cập nhật trạng thái chuyến đi
-        TripDto tripDto = tripServiceClient.updateTripStatus(bearerToken, driveStatus.getTripId(), driveStatus.getStatus());
-
         // Tạo notification
-        NotificationDto notificationDto = NotificationDto.builder()
-                .title("UPDATE_DRIVE_STATE")
-                .body("UPDATE_DRIVE_STATE")
-                .build();
+        NotificationDto notificationDto = new NotificationDto("", "");
 
         // Tạo data từ chuyến đi
-        Map<String, String> data = createDataFromTrip(tripDto, driveStatus.getTripId());
+        Map<String, String> data = createDataFromTrip(driveStatus.getTripDto(), driveStatus.getTripId());
 
         // Gửi notification về phía tổng đài
         if (!driveStatus.getFcmToken().equals("")) {
             sendNotification(notificationDto, driveStatus.getFcmToken(), data);
+        }
+    }
+
+    @RabbitListener(queues = "${rabbitmq.queue.status_customer.name}")
+    public void consumeDriveStatusToCustomer(TravelInfoToCustomer travelInfoToCustomer) {
+
+        // Tạo notification
+        NotificationDto notificationDto = new NotificationDto("", "");
+
+        // Lấy data
+        Map<String, String> data = createDataFromDistanceAndTime(travelInfoToCustomer);
+
+        log.info("FCmtoken: " + travelInfoToCustomer.getFcmToken());
+
+        // Gửi notification về phía customer
+        if (!travelInfoToCustomer.getFcmToken().equals("") && travelInfoToCustomer.getFcmToken() != null) {
+            sendNotification(notificationDto, travelInfoToCustomer.getFcmToken(), data);
+        }
+    }
+
+    @RabbitListener(queues = "${rabbitmq.queue.status_done.name}")
+    public void consumeDriveStatusDoneToCustomer(NotificationDriverStatus notificationDriveDone) {
+
+        // Lấy data
+        Map<String, String> data = createDataDriverStatus(notificationDriveDone.getStatus(), notificationDriveDone.getTripId());
+
+        // Gửi notification về phía tổng đài
+        if (!notificationDriveDone.getFcmToken().equals("")) {
+            sendNotification(notificationDriveDone.getNotificationDto(), notificationDriveDone.getFcmToken(), data);
         }
     }
 
@@ -90,8 +108,49 @@ public class DriveStatusConsumer {
 
         Map<String, String> data = new HashMap<>();
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonData = null;
+        try {
+            jsonData = objectMapper.writeValueAsString(tripDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        data.put("category", "UPDATE_DRIVE_STATE");
         data.put("tripId", tripId);
-        data.put("tripInfo", tripDto.toString());
+        data.put("tripInfo", jsonData);
+
+        return data;
+    }
+
+    private Map<String, String> createDataFromDistanceAndTime(TravelInfoToCustomer travelInfoToCustomer) {
+
+        Map<String, String> data = new HashMap<>();
+
+        data.put("category", "UPDATE_DRIVER_DISTANCE_AND_TIME");
+        data.put("driverRemainingDistance", travelInfoToCustomer.getDriverRemainingDistance());
+        data.put("driverRemainingTime", travelInfoToCustomer.getDriverRemainingTime());
+
+        return data;
+    }
+
+    private Map<String, String> createDataDriverStatus(String status, String tripId) {
+
+        Map<String, String> data = new HashMap<>();
+
+        StatusTrip statusTrip = StatusTrip.valueOf(status);
+
+        switch (statusTrip) {
+            case TRIP_STATUS_PICKING:
+                data.put("category", "INFORM_DRIVER_ARRIVED");
+                break;
+
+            case TRIP_STATUS_DONE:
+                data.put("category", "INFORM_TRIP_DONE");
+                break;
+        }
+
+        data.put("tripId", tripId);
 
         return data;
     }

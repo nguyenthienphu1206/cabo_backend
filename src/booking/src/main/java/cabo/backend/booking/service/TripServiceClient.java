@@ -15,6 +15,10 @@ public interface TripServiceClient {
     GeoPoint getDriverLocation(@RequestHeader("Authorization") String bearerToken,
                                @PathVariable("tripId") String tripId);
 
+    @GetMapping("/api/v1/trip/{tripId}/status")
+    String getTripStatusById(@RequestHeader("Authorization") String bearerToken,
+                             @PathVariable("tripId") String tripId);
+
     @PostMapping("/api/v1/trip")
     ResponseTripId createTrip(@RequestHeader("Authorization") String bearerToken,
                               @RequestBody CreateTripDto createTripDto);
@@ -23,7 +27,8 @@ public interface TripServiceClient {
     String getDriverIdByTripId(@RequestHeader("Authorization") String bearerToken,
                                @PathVariable("tripId") String tripId);
 
-    @DeleteMapping("/api/v1/trip/{tripId}")
-    ResponseStatus deleteTrip(@RequestHeader("Authorization") String bearerToken,
-                              @PathVariable("tripId") String tripId);
+    @PutMapping("/api/v1/trip/{tripId}")
+    ResponseStatus updateTripStatus(@RequestHeader("Authorization") String bearerToken,
+                                    @PathVariable("tripId") String tripId,
+                                    @RequestParam("status") String status);
 }

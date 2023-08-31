@@ -72,6 +72,23 @@ public class CustomerController {
         return new ResponseEntity<>(fullName, HttpStatus.OK);
     }
 
+    @GetMapping("/{customerId}/uid")
+    public ResponseEntity<String> getUidByCustomerId(@PathVariable("customerId") String customerId) {
+
+        String uid = customerService.getUidByCustomerId(customerId);
+
+        return new ResponseEntity<>(uid, HttpStatus.OK);
+    }
+
+    @GetMapping("/{customerId}/get-name-and-phone")
+    public ResponseEntity<ResponseFullNameAndPhone> getNameAndPhoneByCustomerId(@RequestHeader("Authorization") String bearerToken,
+                                                                                @PathVariable("customerId") String customerId) {
+
+        ResponseFullNameAndPhone responseFullNameAndPhone = customerService.getNameAndPhoneByCustomerId(bearerToken, customerId);
+
+        return new ResponseEntity<>(responseFullNameAndPhone, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDto> getCustomerDetails(@RequestHeader("Authorization") String bearerToken,
                                                           @PathVariable("id") String customerId) throws ExecutionException, InterruptedException {
@@ -111,15 +128,6 @@ public class CustomerController {
         ResponseOverview responseOverview = customerService.getOverview(bearerToken, customerId);
 
         return new ResponseEntity<>(responseOverview, HttpStatus.OK);
-    }
-
-    @PostMapping("/drive-booking/estimate-cost")
-    public ResponseEntity<ResponseEstimateCostAndDistance> getEstimateCostAndDistance(@RequestHeader("Authorization") String bearerToken,
-                                                                                       @RequestBody RequestOriginsAndDestinationsLocation requestOriginsAndDestinationsLocation) {
-
-        ResponseEstimateCostAndDistance responseEstimateCostAndDistance = customerService.getEstimateCostAndDistance(bearerToken, requestOriginsAndDestinationsLocation);
-
-        return new ResponseEntity<>(responseEstimateCostAndDistance, HttpStatus.OK);
     }
 
     @PostMapping("/drive-booking/confirm/{customerId}")

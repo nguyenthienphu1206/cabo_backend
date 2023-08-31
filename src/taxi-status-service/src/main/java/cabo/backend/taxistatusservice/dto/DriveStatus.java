@@ -11,11 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DriveStatus {
 
-    private String bearerToken;
-
     private String fcmToken;
 
     private String tripId;
 
-    private String status;
+    private TripDto tripDto;
 }

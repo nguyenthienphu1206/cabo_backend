@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Driver {
-
     private String uid;
     private String fullName;
     private String phoneNumber;

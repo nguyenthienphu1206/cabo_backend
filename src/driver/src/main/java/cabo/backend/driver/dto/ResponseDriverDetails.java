@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseDriverDetails {
 
-    private String uid;
     private String fullName;
     private String phoneNumber;
     private String avatar;
