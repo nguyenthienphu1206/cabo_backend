@@ -534,11 +534,6 @@ public class DriverServiceImpl implements DriverService {
         ResponseRecentTrip responseRecentTrip = null;
 
         if (recentTrip != null) {
-            String driverStartLocation = bingMapServiceClient.getAddress(recentTrip.getDriverStartLocation().getLatitude(),
-                    recentTrip.getDriverStartLocation().getLongitude());
-
-            String toLocation = bingMapServiceClient.getAddress(recentTrip.getToLocation().getLatitude(),
-                    recentTrip.getToLocation().getLongitude());
 
             responseRecentTrip = ResponseRecentTrip.builder()
                     .cost(recentTrip.getCost())
@@ -546,15 +541,14 @@ public class DriverServiceImpl implements DriverService {
                     .startTime(recentTrip.getStartTime())
                     .pickUpTime(recentTrip.getPickUpTime())
                     .endTime(recentTrip.getEndTime())
-                    .driverStartLocation(driverStartLocation)
-                    .toLocation(toLocation)
+                    .driverStartLocation(recentTrip.getDriverStartLocation())
+                    .toLocation(recentTrip.getToLocation())
                     .build();
         }
 
         //log.info("Test1 " + recentTrip);
 
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "driver", driverId);
-
 
         ResponseAverageIncomePerDrive responseAverageIncomePerDrive = tripServiceClient.getAverageIncomePerDrive(bearerToken, driverId);
 

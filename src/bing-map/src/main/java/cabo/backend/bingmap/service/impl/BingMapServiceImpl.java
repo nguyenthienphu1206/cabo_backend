@@ -248,7 +248,7 @@ public class BingMapServiceImpl implements BingMapService {
 
         double estimateCost = getEstimateCost(distance) * 1.0D;
 
-        if (requestOriginsAndDestinationsLocation.getVehicleType().equals("VEHICLE_TYPE_CAR_6")) {
+        if (requestOriginsAndDestinationsLocation.getVehicleType().equals("VEHICLE_TYPE_CAR_7")) {
             estimateCost *= 1.5;
         }
 

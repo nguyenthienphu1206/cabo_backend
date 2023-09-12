@@ -343,24 +343,17 @@ public class CustomerServiceImpl implements CustomerService {
         ResponseRecentTrip responseRecentTrip = null;
 
         if (recentTrip != null) {
-            String customerOrderLocation = bingMapServiceClient.getAddress(recentTrip.getCustomerOrderLocation().getLatitude(),
-                    recentTrip.getCustomerOrderLocation().getLongitude());
-
-            String toLocation = bingMapServiceClient.getAddress(recentTrip.getToLocation().getLatitude(),
-                    recentTrip.getToLocation().getLongitude());
 
             responseRecentTrip = ResponseRecentTrip.builder()
                     .cost(recentTrip.getCost())
                     .distance(recentTrip.getDistance())
                     .startTime(recentTrip.getStartTime())
                     .endTime(recentTrip.getEndTime())
-                    .customerOrderLocation(customerOrderLocation)
-                    .toLocation(toLocation)
+                    .customerOrderLocation(recentTrip.getCustomerOrderLocation())
+                    .toLocation(recentTrip.getToLocation())
                     .paymentType(recentTrip.getPaymentType())
                     .build();
         }
-
-
 
         //log.info("Test1 " + recentTrip);
         ResponseTotalTrip responseTotalTrip = tripServiceClient.getTotalTrip(bearerToken, "customer", customerId);

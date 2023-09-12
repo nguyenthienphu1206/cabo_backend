@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class TripController {
 
     private TripService tripService;
@@ -63,9 +63,10 @@ public class TripController {
 
     @GetMapping("/trip/customer/{customerId}")
     public ResponseEntity<List<TripDto>> getTripByCustomerId(@RequestHeader("Authorization") String bearerToken,
-                                                             @PathVariable("customerId") String customerId) {
+                                                             @PathVariable("customerId") String customerId,
+                                                             @RequestParam(value = "pageNo", defaultValue = "1", required = false) int pageNo) {
 
-        List<TripDto> tripDtos = tripService.getTripByCustomerId(bearerToken, customerId);
+        List<TripDto> tripDtos = tripService.getTripByCustomerId(bearerToken, customerId, pageNo);
 
         return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }

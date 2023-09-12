@@ -9,17 +9,17 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TripDto {
+public class CompletedTrip {
 
     private String tripId;
 
-    private String cost;
+    private long cost;
 
     private String customerName;
 
     private String driverName;
 
-    private String distance;
+    private double distance;
 
     private long startTime;
 

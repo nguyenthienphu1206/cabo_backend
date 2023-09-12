@@ -6,6 +6,7 @@ import cabo.backend.bingmap.dto.ResponseListAddresses;
 import cabo.backend.bingmap.dto.TravelInfor;
 import cabo.backend.bingmap.service.BingMapService;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class BingMapController {
 
     private BingMapService bingMapService;
@@ -37,7 +38,11 @@ public class BingMapController {
     @GetMapping("/bing-map/get-list-places")
     public ResponseEntity<List<ResponseListAddresses>> getRealPlacesBySearchQuery(@RequestParam String searchLocation) {
 
-        return new ResponseEntity<>(bingMapService.getRealPlacesBySearchQuery(searchLocation), HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Access-Control-Allow-Origin", "*");
+        headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+        headers.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
+        return ResponseEntity.ok().headers(headers).body(bingMapService.getRealPlacesBySearchQuery(searchLocation));
     }
 
     @GetMapping("/bing-map/address/location")

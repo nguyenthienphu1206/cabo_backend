@@ -15,7 +15,7 @@ public interface TripService {
 
     List<TripDto> getAllTrip(String bearerToken);
 
-    List<TripDto> getTripByCustomerId(String bearerToken, String customerId);
+    List<TripDto> getTripByCustomerId(String bearerToken, String customerId, int pageNumber);
 
     List<TripDto> getTripByDriverId(String bearerToken, String driverId);
 

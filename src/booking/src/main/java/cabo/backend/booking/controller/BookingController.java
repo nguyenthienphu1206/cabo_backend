@@ -11,7 +11,7 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/v1/booking")
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "*")
 public class BookingController {
 
     private BookingService bookingService;

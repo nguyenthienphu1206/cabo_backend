@@ -10,13 +10,13 @@ public class TripDto {
 
     private String tripId;
 
-    private long cost;
+    private String cost;
 
     private String customerName;
 
     private String driverName;
 
-    private double distance;
+    private String distance;
 
     private long startTime;
 
