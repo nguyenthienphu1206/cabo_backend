@@ -31,6 +31,10 @@ public interface TripService {
 
     String getTripStatusById(String bearerToken, String tripId);
 
+    IncomeDto getTotalIncome(String bearerToken, String driverId);
+
+    IncomeDto getIncomeByTimeRange(String bearerToken, String driverId, long startDate, long endDate);
+
     ResponseStatus acceptDrive(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 
     ResponseStatus confirmPickupLocationArrival(String bearerToken, PickUpAndCompletionLocation pickUpLocation);

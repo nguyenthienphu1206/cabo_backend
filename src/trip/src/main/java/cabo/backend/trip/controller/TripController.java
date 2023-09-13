@@ -136,6 +136,26 @@ public class TripController {
         return new ResponseEntity<>(status, HttpStatus.OK);
     }
 
+    @GetMapping("/trip/driver/{driverId}/total-income")
+    public ResponseEntity<IncomeDto> getTotalIncome(@RequestHeader("Authorization") String bearerToken,
+                                                    @PathVariable("driverId") String driverId) {
+
+        IncomeDto incomeDto = tripService.getTotalIncome(bearerToken, driverId);
+
+        return new ResponseEntity<>(incomeDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/driver/{driverId}/period-income")
+    public ResponseEntity<IncomeDto> getIncomeByTimeRange(@RequestHeader("Authorization") String bearerToken,
+                                                          @PathVariable("driverId") String driverId,
+                                                          @RequestParam long startDate,
+                                                          @RequestParam long endDate) {
+
+        IncomeDto incomeDto = tripService.getIncomeByTimeRange(bearerToken, driverId, startDate, endDate);
+
+        return new ResponseEntity<>(incomeDto, HttpStatus.OK);
+    }
+
     @PostMapping("/trip/drive-booking/accept-drive")
     public ResponseEntity<ResponseStatus> acceptDrive(@RequestHeader("Authorization") String bearerToken,
                                                       @RequestBody RequestReceivedDriverInfo requestReceivedDriverInfo) {

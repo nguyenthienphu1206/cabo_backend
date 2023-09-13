@@ -515,6 +515,72 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public IncomeDto getTotalIncome(String bearerToken, String driverId) {
+        String idToken = bearerToken.substring(7);
+//
+//      FirebaseToken decodedToken = decodeToken(idToken);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverId)
+                .whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE);
+
+        long income = 0;
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                income += trip.getCost();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return IncomeDto.builder()
+                .income((int) convertDoubleToDoubleFormat(income * 70.0/100.0, -3) + " VND")
+                .build();
+    }
+
+    @Override
+    public IncomeDto getIncomeByTimeRange(String bearerToken, String driverId, long startDate, long endDate) {
+
+        String idToken = bearerToken.substring(7);
+//
+//      FirebaseToken decodedToken = decodeToken(idToken);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverId)
+                .whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE);
+                //.whereGreaterThanOrEqualTo("startTime", startDate)
+                //.whereLessThanOrEqualTo("startTime", endDate);
+
+        long income = 0;
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                log.info("Cost: " + trip.getCost());
+
+                if (trip.getStartTime() >= startDate && trip.getStartTime() <= endDate) {
+
+                    income += trip.getCost();
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return IncomeDto.builder()
+                .income((int) convertDoubleToDoubleFormat(income * 70.0/100.0, -3) + " VND")
+                .build();
+    }
+
+    @Override
     public ResponseStatus acceptDrive(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo) {
 
 //        String idToken = bearerToken.substring(7);
