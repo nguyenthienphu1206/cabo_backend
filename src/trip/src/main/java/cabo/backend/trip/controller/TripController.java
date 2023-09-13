@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class TripController {
 
     private TripService tripService;
@@ -63,9 +63,10 @@ public class TripController {
 
     @GetMapping("/trip/customer/{customerId}")
     public ResponseEntity<List<TripDto>> getTripByCustomerId(@RequestHeader("Authorization") String bearerToken,
-                                                             @PathVariable("customerId") String customerId) {
+                                                             @PathVariable("customerId") String customerId,
+                                                             @RequestParam(value = "pageNo", defaultValue = "1", required = false) int pageNo) {
 
-        List<TripDto> tripDtos = tripService.getTripByCustomerId(bearerToken, customerId);
+        List<TripDto> tripDtos = tripService.getTripByCustomerId(bearerToken, customerId, pageNo);
 
         return new ResponseEntity<>(tripDtos, HttpStatus.OK);
     }
@@ -133,6 +134,26 @@ public class TripController {
         String status = tripService.getTripStatusById(bearerToken, tripId);
 
         return new ResponseEntity<>(status, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/driver/{driverId}/total-income")
+    public ResponseEntity<IncomeDto> getTotalIncome(@RequestHeader("Authorization") String bearerToken,
+                                                    @PathVariable("driverId") String driverId) {
+
+        IncomeDto incomeDto = tripService.getTotalIncome(bearerToken, driverId);
+
+        return new ResponseEntity<>(incomeDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/trip/driver/{driverId}/period-income")
+    public ResponseEntity<IncomeDto> getIncomeByTimeRange(@RequestHeader("Authorization") String bearerToken,
+                                                          @PathVariable("driverId") String driverId,
+                                                          @RequestParam long startDate,
+                                                          @RequestParam long endDate) {
+
+        IncomeDto incomeDto = tripService.getIncomeByTimeRange(bearerToken, driverId, startDate, endDate);
+
+        return new ResponseEntity<>(incomeDto, HttpStatus.OK);
     }
 
     @PostMapping("/trip/drive-booking/accept-drive")

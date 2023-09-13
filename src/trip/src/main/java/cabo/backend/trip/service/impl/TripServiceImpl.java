@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -218,15 +220,18 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<TripDto> getTripByCustomerId(String bearerToken, String customerId) {
+    public List<TripDto> getTripByCustomerId(String bearerToken, String customerId, int pageNo) {
 
-        //String idToken = bearerToken.substring(7);
-
-        //FirebaseToken decodedToken = decodeToken(idToken);
+//        String idToken = bearerToken.substring(7);
+//
+//        FirebaseToken decodedToken = decodeToken(idToken);
 
         List<TripDto> tripDtos = new ArrayList<>();
 
-        Query query = collectionRefTrip.whereEqualTo("customerId", customerId);
+        Query query = collectionRefTrip.whereEqualTo("customerId", customerId)
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
+                .limit(6)
+                .offset((pageNo - 1) * 6);
 
         try {
             QuerySnapshot querySnapshot = query.get().get();
@@ -255,7 +260,8 @@ public class TripServiceImpl implements TripService {
 
         List<TripDto> tripDtos = new ArrayList<>();
 
-        Query query = collectionRefTrip.whereEqualTo("driverId", driverId);
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverId)
+                .orderBy("startTime", Query.Direction.DESCENDING);
 
         try {
             QuerySnapshot querySnapshot = query.get().get();
@@ -283,7 +289,8 @@ public class TripServiceImpl implements TripService {
         //FirebaseToken decodedToken = decodeToken(idToken);
 
         Query query = collectionRefTrip.whereEqualTo("customerId", customerId)
-                .orderBy("startTime", Query.Direction.DESCENDING)
+                .whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE)
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .limit(1);
 
         try {
@@ -293,13 +300,25 @@ public class TripServiceImpl implements TripService {
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
+                String costFormat = (int)convertDoubleToDoubleFormat(trip.getCost(), -3) + " VND";
+
+                String distanceFormat;
+                double distance = trip.getDistance();
+
+                if (distance < 1) {
+                    distance *= 1000;
+                    distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
+                } else {
+                    distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
+                }
+
                 ResponseRecentTripFromCustomer responseRecentTripFromCustomer = ResponseRecentTripFromCustomer.builder()
-                        .cost(trip.getCost())
-                        .distance(trip.getDistance())
+                        .cost(costFormat)
+                        .distance(distanceFormat)
                         .startTime(trip.getStartTime())
                         .endTime(trip.getEndTime())
-                        .customerOrderLocation(trip.getCustomerOrderLocation())
-                        .toLocation(trip.getToLocation())
+                        .customerOrderLocation(getAddressFromLocation(trip.getCustomerOrderLocation()))
+                        .toLocation(getAddressFromLocation(trip.getToLocation()))
                         .paymentType(trip.getPaymentType())
                         .build();
 
@@ -332,14 +351,26 @@ public class TripServiceImpl implements TripService {
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
+                String costFormat = (int)convertDoubleToDoubleFormat(trip.getCost(), -3) + " VND";
+
+                String distanceFormat;
+                double distance = trip.getDistance();
+
+                if (distance < 1) {
+                    distance *= 1000;
+                    distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
+                } else {
+                    distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
+                }
+
                 ResponseRecentTripFromDriver responseRecentTripFromDriver = ResponseRecentTripFromDriver.builder()
-                        .cost(trip.getCost())
-                        .distance(trip.getDistance())
+                        .cost(costFormat)
+                        .distance(distanceFormat)
                         .startTime(trip.getStartTime())
                         .pickUpTime(trip.getPickUpTime())
                         .endTime(trip.getEndTime())
-                        .driverStartLocation(trip.getDriverStartLocation())
-                        .toLocation(trip.getToLocation())
+                        .driverStartLocation(getAddressFromLocation(trip.getDriverStartLocation()))
+                        .toLocation(getAddressFromLocation(trip.getToLocation()))
                         .build();
 
                 log.info("Successfully");
@@ -365,7 +396,7 @@ public class TripServiceImpl implements TripService {
             field = "customerId";
         }
 
-        Query query = collectionRefTrip.whereEqualTo(field, id);
+        Query query = collectionRefTrip.whereEqualTo(field, id).whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE);
 
         AggregateQuerySnapshot snapshot = null;
         try {
@@ -481,6 +512,72 @@ public class TripServiceImpl implements TripService {
         }
 
         return null;
+    }
+
+    @Override
+    public IncomeDto getTotalIncome(String bearerToken, String driverId) {
+        String idToken = bearerToken.substring(7);
+//
+//      FirebaseToken decodedToken = decodeToken(idToken);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverId)
+                .whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE);
+
+        long income = 0;
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                income += trip.getCost();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return IncomeDto.builder()
+                .income((int) convertDoubleToDoubleFormat(income * 70.0/100.0, -3) + " VND")
+                .build();
+    }
+
+    @Override
+    public IncomeDto getIncomeByTimeRange(String bearerToken, String driverId, long startDate, long endDate) {
+
+        String idToken = bearerToken.substring(7);
+//
+//      FirebaseToken decodedToken = decodeToken(idToken);
+
+        Query query = collectionRefTrip.whereEqualTo("driverId", driverId)
+                .whereEqualTo("status", StatusTrip.TRIP_STATUS_DONE);
+                //.whereGreaterThanOrEqualTo("startTime", startDate)
+                //.whereLessThanOrEqualTo("startTime", endDate);
+
+        long income = 0;
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                Trip trip = document.toObject(Trip.class);
+
+                log.info("Cost: " + trip.getCost());
+
+                if (trip.getStartTime() >= startDate && trip.getStartTime() <= endDate) {
+
+                    income += trip.getCost();
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return IncomeDto.builder()
+                .income((int) convertDoubleToDoubleFormat(income * 70.0/100.0, -3) + " VND")
+                .build();
     }
 
     @Override
@@ -772,13 +869,25 @@ public class TripServiceImpl implements TripService {
             driverName = driverServiceClient.getNameByDriverId(bearerToken, trip.getDriverId());
         }
 
+        String estimateCostFormat = (int)convertDoubleToDoubleFormat(trip.getCost(), -3) + " VND";
+
+        String distanceFormat;
+        double distance = trip.getDistance();
+
+        if (distance < 1) {
+            distance *= 1000;
+            distanceFormat = (int)convertDoubleToDoubleFormat(distance, 0) + " m";
+        } else {
+            distanceFormat = convertDoubleToDoubleFormat(distance, 1) + " km";
+        }
+
         return TripDto.builder()
                 .tripId(tripId)
-                .cost(trip.getCost())
+                .cost(estimateCostFormat)
                 .customerName(customerName)
                 .customerPhoneNumber(phoneNumber)
                 .driverName(driverName)
-                .distance(trip.getDistance())
+                .distance(distanceFormat)
                 .startTime(trip.getStartTime())
                 .pickUpTime(trip.getPickUpTime())
                 .endTime(trip.getEndTime())
@@ -883,5 +992,13 @@ public class TripServiceImpl implements TripService {
         }
 
         return "";
+    }
+
+    private double convertDoubleToDoubleFormat(double value, int decimalPlaces) {
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+
+        return bd.doubleValue();
     }
 }

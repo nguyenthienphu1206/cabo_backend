@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseRecentTrip {
 
-    private long cost;
+    private String cost;
 
-    private double distance;
+    private String distance;
 
     private long startTime;
 

@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseRecentTripFromDriver {
 
-    private long cost;
+    private String cost;
 
-    private double distance;
+    private String distance;
 
     private long startTime;
 
@@ -22,7 +22,7 @@ public class ResponseRecentTripFromDriver {
 
     private long endTime;
 
-    private GeoPoint driverStartLocation;
+    private String driverStartLocation;
 
-    private GeoPoint toLocation;
+    private String toLocation;
 }

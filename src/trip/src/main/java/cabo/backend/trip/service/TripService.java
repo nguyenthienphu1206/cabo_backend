@@ -15,7 +15,7 @@ public interface TripService {
 
     List<TripDto> getAllTrip(String bearerToken);
 
-    List<TripDto> getTripByCustomerId(String bearerToken, String customerId);
+    List<TripDto> getTripByCustomerId(String bearerToken, String customerId, int pageNumber);
 
     List<TripDto> getTripByDriverId(String bearerToken, String driverId);
 
@@ -30,6 +30,10 @@ public interface TripService {
     String getDriverIdByTripId(String bearerToken, String tripId);
 
     String getTripStatusById(String bearerToken, String tripId);
+
+    IncomeDto getTotalIncome(String bearerToken, String driverId);
+
+    IncomeDto getIncomeByTimeRange(String bearerToken, String driverId, long startDate, long endDate);
 
     ResponseStatus acceptDrive(String bearerToken, RequestReceivedDriverInfo requestReceivedDriverInfo);
 
