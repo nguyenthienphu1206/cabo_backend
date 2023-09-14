@@ -27,7 +27,7 @@ public class BackgroundService {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
     }
 
-    @Scheduled(cron = "0 20 11 * * *", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 59 23 * * *", zone = "Asia/Ho_Chi_Minh")
     public void checkOutAtSchedule() {
 
         log.info("Test");

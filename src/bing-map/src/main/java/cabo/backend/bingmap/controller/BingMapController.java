@@ -38,11 +38,11 @@ public class BingMapController {
     @GetMapping("/bing-map/get-list-places")
     public ResponseEntity<List<ResponseListAddresses>> getRealPlacesBySearchQuery(@RequestParam String searchLocation) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Access-Control-Allow-Origin", "*");
-        headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-        headers.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
-        return ResponseEntity.ok().headers(headers).body(bingMapService.getRealPlacesBySearchQuery(searchLocation));
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("Access-Control-Allow-Origin", "*");
+//        headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//        headers.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
+        return ResponseEntity.ok().body(bingMapService.getRealPlacesBySearchQuery(searchLocation));
     }
 
     @GetMapping("/bing-map/address/location")

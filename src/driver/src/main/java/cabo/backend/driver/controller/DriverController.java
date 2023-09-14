@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/driver")
 @Slf4j
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class DriverController {
 
     private DriverService driverService;

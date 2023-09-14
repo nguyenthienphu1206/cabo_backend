@@ -564,8 +564,6 @@ public class TripServiceImpl implements TripService {
             for (QueryDocumentSnapshot document : documents) {
                 Trip trip = document.toObject(Trip.class);
 
-                log.info("Cost: " + trip.getCost());
-
                 if (trip.getStartTime() >= startDate && trip.getStartTime() <= endDate) {
 
                     income += trip.getCost();
@@ -659,7 +657,7 @@ public class TripServiceImpl implements TripService {
 
                     double distance = travelInfor.getTravelDistance();
 
-                    if (distance > 0.1) {
+                    if (distance > 2) {
                         log.info("Pick_up_failed");
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Failed, too far from pick up location");
@@ -721,25 +719,32 @@ public class TripServiceImpl implements TripService {
                 Trip trip = document.toObject(Trip.class);
 
                 if (trip != null) {
-                    GeoPoint customerOrderLocation = trip.getCustomerOrderLocation();
+                    GeoPoint toLocation = trip.getToLocation();
 
                     TravelInfor travelInfor = bingMapServiceClient.getDistanceAndTime(completionLocation.getCurrentLocation().getLatitude(),
                             completionLocation.getCurrentLocation().getLongitude(),
-                            customerOrderLocation.getLatitude(),
-                            customerOrderLocation.getLongitude());
+                            toLocation.getLatitude(),
+                            toLocation.getLongitude());
 
                     double distance = travelInfor.getTravelDistance();
 
-                    if (distance > 0.05) {
+                    if (distance > 2) {
+                        log.info("done_failed");
                         responseStatus.setTimestamp(new Date());
                         responseStatus.setMessage("Failed, too far from completed location");
                     }
                     else {
+                        log.info("done_successful");
                         long currentTime = Instant.now().getEpochSecond();
                         trip.setEndTime(currentTime);
                         trip.setStatus(StatusTrip.TRIP_STATUS_DONE.name());
                         trip.setUpdatedAt(currentTime);
                         documentReference.set(trip);
+
+                        log.info("id: " +  completionLocation.getDriverId());
+                        String status = "ONLINE";
+                        driverServiceClient.updateDriverStatus(bearerToken, completionLocation.getDriverId(), status);
+                        log.info("updateDriverStatus_successful");
 
                         NotificationDriverStatus notificationDriverDone = NotificationDriverStatus.builder()
                                 .status(StatusTrip.TRIP_STATUS_DONE.name())

@@ -11,7 +11,7 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/v1")
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class ReceiverController {
 
     private final ReceiverProducer receiverProducer;

@@ -145,8 +145,11 @@ public class DriverServiceImpl implements DriverService {
 
                 if (driver != null) {
                     DocumentReference vehicleIdRef = driver.getVehicleId();
+                    String vehicleId = "";
 
-                    String vehicleId = vehicleIdRef.getId();
+                    if (vehicleIdRef != null) {
+                        vehicleId = vehicleIdRef.getId();
+                    }
 
                     VehicleDto vehicleDto = vehicleServiceClient.getVehicle(bearerToken, vehicleId);
 
