@@ -241,15 +241,18 @@ public class BookingServiceImpl implements BookingService {
                 log.info("CustomerInfo: " + data);
 
                 String driverId = searchSuitableDriver(bearerToken, tripId, requestBooking.getCustomerOrderLocation(), requestBooking.getCarType(), data);
+                log.info("DriverId: " + driverId);
 
                 if (driverId != null) {
                     responseDriverInformation = getDriverInformationFromDB(bearerToken, driverId, tripId);
+                    log.info("responseDriverInformation: Successfully");
 
                     // Gửi thông báo đã có người nhận cuốc đến tất cả người còn lại
-                    sendTripReceivedNotification(driverId);
+                    //sendTripReceivedNotification(driverId);
 
                     // Update driver status
                     driverServiceClient.updateDriverStatus(bearerToken, driverId, StatusDriver.BUSY.name());
+                    log.info("updateDriverStatus: Successfully");
                 }
             }
             return responseDriverInformation;
@@ -257,7 +260,7 @@ public class BookingServiceImpl implements BookingService {
 
         ResponseDriverInformation responseDriverInformation = future.join();
 
-        log.info("Test: " + responseDriverInformation);
+        log.info("responseDriverInformation: " + responseDriverInformation);
 
         if (responseDriverInformation == null) {
             responseDriverInformation = new ResponseDriverInformation(null, new DriverInfo());

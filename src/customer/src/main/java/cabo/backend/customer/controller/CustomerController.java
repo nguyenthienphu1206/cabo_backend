@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/api/v1/customer")
 @Slf4j
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class CustomerController {
 
     private CustomerService customerService;
